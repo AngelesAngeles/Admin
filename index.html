@@ -1,0 +1,2552 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Angeles Angeles Boutique — Admin</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { color: #c91f16; margin-bottom: 30px; }
+    .section { background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 14px;
+    }
+    textarea { resize: vertical; min-height: 80px; }
+    button {
+      background: #c91f16;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+    button:hover { background: #a01710; }
+    button.secondary { background: #666; }
+    button.secondary:hover { background: #555; }
+    button.danger { background: #dc3545; }
+    button.danger:hover { background: #c82333; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .tallas-group { display: flex; gap: 20px; flex-wrap: wrap; }
+    .checkbox { display: flex; align-items: center; gap: 8px; }
+    .checkbox input { width: auto; }
+    .colores-group { display: flex; gap: 12px; flex-wrap: wrap; }
+    .color-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 4px;
+      border: 2px solid #ddd;
+      cursor: pointer;
+      transition: border-color 0.3s;
+    }
+    .color-btn.selected, .color-btn[aria-pressed="true"] { border-color: #c91f16; border-width: 3px; outline: 2px solid #c91f16; outline-offset: 2px; }
+    .producto-item {
+      border: 1px solid #ddd;
+      padding: 20px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      background: #f9f9f9;
+    }
+    .producto-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .producto-header h3 { margin: 0; color: #333; }
+    .referencia-item {
+      background: white;
+      border: 1px solid #eee;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      display: grid;
+      grid-template-columns: 100px 100px 150px 1fr auto;
+      gap: 15px;
+      align-items: center;
+    }
+    .img-preview { width: 100px; height: 100px; background: #f0f0f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 12px; overflow: hidden; }
+    .img-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .referencia-info { display: flex; gap: 20px; align-items: center; }
+    .referencia-info span { font-size: 14px; }
+    .status { padding: 8px 12px; border-radius: 4px; font-size: 12px; }
+    .status.success { background: #d4edda; color: #155724; }
+    .status.error { background: #f8d7da; color: #721c24; }
+    .status.loading { background: #e2e3e5; color: #383d41; }
+    .productos-lista { max-height: 600px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; border-radius: 4px; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #ddd; }
+    .tab-btn { padding: 12px 20px; border: none; background: none; cursor: pointer; font-weight: 600; border-bottom: 2px solid transparent; color: #666; }
+    .tab-btn.active { color: #c91f16; border-bottom-color: #c91f16; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    @media (max-width: 768px) {
+      .referencia-item { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      border-radius: 4px;
+      background: #333;
+      color: white;
+      font-size: 14px;
+      max-width: 400px;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(400px); }
+      to { transform: translateX(0); }
+    }
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal { background: white; padding: 30px; border-radius: 8px; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h2 { margin: 0; }
+    .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; }
+  
+/* ── Ajustes visuales · KAFEL ─────────────────────────────── */
+body {
+  background: linear-gradient(180deg, #E6CAD0 0%, #EFCED4 100%) fixed;
+  background-color: #E9C9D0;                 /* respaldo si no hay degradado */
+}
+h1 { text-align: center; margin: 4px 0 6px; }
+.admin-logo { display: block; width: min(62%, 290px); height: auto; margin: 0 auto; }
+.admin-sub {
+  text-align: center; margin: 0 0 28px; font-size: 12px; font-weight: 600;
+  letter-spacing: .22em; text-transform: uppercase; color: #7A4657;
+}
+/* la barra de pestañas va sobre blanco: así los colores originales
+   conservan su contraste, que sobre el rosa bajaba a 3.7:1 */
+.tabs {
+  background: #fff; border-radius: 10px 10px 0 0; padding: 0 10px;
+  border-bottom-color: #E3D2D7; flex-wrap: wrap;
+}
+/* selector "tipo de talla": normales o numéricas */
+.tipo-talla { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+.tipo-talla label {
+  display: inline-flex; align-items: center; gap: 8px; margin: 0; cursor: pointer;
+  padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; background: #fff;
+  font-size: 14px; font-weight: 500; color: #333;
+  transition: border-color .15s, background .15s;
+}
+.tipo-talla label:hover { border-color: #c91f16; }
+.tipo-talla input { accent-color: #c91f16; width: auto; margin: 0; }
+.tipo-talla label:has(input:checked) { border-color: #c91f16; background: #FBEDEC; color: #8F1710; }
+.tipo-talla small { font-weight: 400; color: #777; }
+
+.aviso-color { margin-top: 10px; padding: 10px 12px; border-radius: 8px; background: #FBF3E4; border: 1px solid #EBD3A0;
+  color: #6B4A0F; font-size: 13px; line-height: 1.45; }
+.aviso-color[hidden] { display: none; }
+.fotos-extra { margin: -4px 0 12px 24px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;
+  background: #FCF8F9; border-left: 3px solid #E3D2D7; border-radius: 0 8px 8px 0; }
+.foto-extra { display: flex; align-items: center; gap: 12px; font-size: 13px; color: #555; }
+.foto-extra img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+.foto-extra span { flex: 1; }
+.foto-extra button { padding: 4px 10px; font-size: 12px; }
+.bloque-sin-borde { border: 0; margin: 0; padding: 0; min-width: 0; }
+.bloque-sin-borde[hidden], #bloqueMultiple[hidden], #btnAgregarPieza[hidden], #btnCancelarMultiple[hidden] { display: none; }
+.pieza-form { padding: 16px; margin-bottom: 14px; border: 1px solid #ddd; border-radius: 10px; background: #FCF8F9; }
+.pieza-form__cab { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.pieza-form__cab strong { font-size: 15px; }
+.pieza-form__cab button { padding: 5px 12px; font-size: 12px; }
+.pieza-form__cab button[disabled] { opacity: .4; cursor: not-allowed; }
+.pieza-form .form-group:last-child { margin-bottom: 0; }
+.multi-item { display: grid; grid-template-columns: 100px 1fr; gap: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #fff; }
+.multi-piezas { display: grid; gap: 8px; align-content: start; }
+.multi-foto.img-preview { width: 130px; height: 170px; }
+.multi-pieza { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 14px; padding: 9px 12px;
+  border: 1px solid #eee; border-radius: 6px; background: #FAFAFA; font-size: 14px; }
+.multi-pieza span:not(:first-child) { color: #555; }
+@media (max-width: 600px) { .multi-item { grid-template-columns: 1fr; } }
+.ayuda { margin: 0 0 20px; font-size: 14px; color: #666; line-height: 1.5; }
+.piezas-lista { margin-top: 10px; max-height: 260px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; background: #fff; }
+.pieza { display: flex; align-items: center; gap: 10px; margin: 0; padding: 10px 14px; cursor: pointer; font-weight: 500;
+  border-bottom: 1px solid #F1E7EA; }
+.pieza:last-child { border-bottom: 0; }
+.pieza:hover { background: #FCF8F9; }
+.pieza input, .check-linea input { width: auto; margin: 0; }
+.pieza small { margin-left: auto; color: #666; font-weight: 400; }
+.pieza[hidden] { display: none; }
+.piezas-vacio { padding: 14px; font-size: 14px; color: #666; }
+.piezas-cuenta { display: block; margin-top: 8px; font-size: 13px; color: #666; }
+.check-linea { display: inline-flex; align-items: center; gap: 10px; margin: 0; padding: 10px 14px; cursor: pointer; font-weight: 500;
+  border: 1px solid #ddd; border-radius: 8px; background: #fff; }
+.look-preview { width: 120px; height: 160px; }
+.insignia-com { display: inline-block; min-width: 20px; margin-left: 8px; padding: 1px 7px; border-radius: 999px; background: #C91F16; color: #fff; font-size: 12px; font-weight: 700; line-height: 1.5; text-align: center; }
+.insignia-com[hidden] { display: none; }
+.com-nuevos { margin-bottom: 24px; padding: 16px; border: 2px solid #E0A100; border-radius: 10px; background: #FFF8E1; }
+.com-nuevos h3 { margin: 0 0 4px; font-size: 17px; }
+.com-nuevos .ayuda { margin-bottom: 14px; }
+.com-nuevos .com-item { border-color: #E0A100; }
+.nuevo-tag { display: inline-block; padding: 1px 8px; border-radius: 999px; background: #C91F16; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.com-sub { margin: 4px 0 12px; font-size: 17px; }
+.com-item { display: grid; gap: 12px; padding: 14px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fff; }
+.com-item__txt { margin: 0; font-size: 15px; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
+.com-item__meta { display: block; margin-top: 6px; font-size: 13px; color: #666; }
+.com-item__meta .ok { color: #1E7E34; font-weight: 600; }
+.com-item__meta .off { color: #B3541E; font-weight: 600; }
+.com-item__acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.com-item__acciones button { padding: 6px 12px; font-size: 12px; }
+.com-item__acciones button[disabled] { opacity: .4; cursor: not-allowed; }
+.color-btn--none { background: #fff !important; border: 1.5px solid #ccc !important; color: #666; font-size: 14px; font-weight: 600; display: grid; place-items: center; }
+.color-btn--none[aria-pressed="true"] { outline: 2px solid #c91f16; outline-offset: 2px; }
+.look-item { display: grid; grid-template-columns: 72px 1fr; gap: 14px; align-items: center; padding: 14px; margin-bottom: 12px;
+  border: 1px solid #ddd; border-radius: 8px; background: #fff; }
+.look-item__img { width: 72px; height: 96px; border-radius: 6px; overflow: hidden; background: #f0f0f0; }
+.look-item__img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.look-item__info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.look-item__info strong { font-size: 16px; }
+.look-item__info span { font-size: 13px; color: #666; }
+.look-item__info .ok { color: #1E7E34; font-weight: 600; }
+.look-item__info .off { color: #B3541E; font-weight: 600; }
+.look-item__acciones { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+.look-item__acciones button { padding: 6px 12px; font-size: 12px; }
+.look-item__acciones button[disabled] { opacity: .4; cursor: not-allowed; }
+.nota-talla { flex-basis: 100%; margin: -10px 0 0; font-size: 13px; color: #777; }
+.checkbox--fija { opacity: .85; }
+
+/* al pasar el mouse, la regla base button:hover pintaba la pestaña de rojo
+   oscuro con el texto gris encima (2.3:1). Solo afecta el hover. */
+.tab-btn:hover { background: #F7EDF0; color: #A01710; }
+
+@media (max-width: 600px) {
+  .admin-logo { width: min(80%, 240px); }
+  .tabs { gap: 4px; padding: 4px 6px; }
+  .tab-btn { padding: 10px 12px; font-size: 14px; }   /* 4 pestañas no cabían en una fila */
+}
+</style>
+</head>
+<body>
+
+<div class="container" id="contenedor-principal">
+  <h1><img class="admin-logo" src="data:image/webp;base64,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" alt="Angeles Angeles Boutique"></h1>
+<p class="admin-sub">👑 Panel Admin</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="cambiarTab('crear')">✨ Crear Producto</button>
+    <button class="tab-btn" onclick="cambiarTab('gestionar')">📋 Gestionar Productos</button>
+    <button class="tab-btn" onclick="cambiarTab('colores')">🎨 Colores</button>
+    <button class="tab-btn" onclick="cambiarTab('categorias')">📁 Categorías</button>
+    <button class="tab-btn" onclick="cambiarTab('temporada')">🌸 Temporada</button>
+    <button class="tab-btn" onclick="cambiarTab('comentarios')">💬 Comentarios<span id="insigniaCom" class="insignia-com" hidden></span></button>
+  </div>
+
+  <!-- TAB 1: CREAR PRODUCTO -->
+  <div id="tab-crear" class="tab-content active">
+    <div class="section">
+      <h2>Crear Nuevo Producto</h2>
+      <form id="formCrearProducto">
+        <div class="form-group">
+          <label>Tipo de producto *</label>
+          <div class="tipo-talla" id="tipoProducto" role="radiogroup" aria-label="Tipo de producto">
+            <label><input type="radio" name="tipoProducto" value="individual" checked> Individual <small>(una prenda con sus colores)</small></label>
+            <label><input type="radio" name="tipoProducto" value="multiple"> Múltiples <small>(varias prendas en una misma foto)</small></label>
+          </div>
+          <p class="ayuda" id="tipoProductoAyuda" style="margin: 10px 0 0;">Una prenda con uno o varios colores, cada color con su foto.</p>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Nombre del Producto *</label>
+            <input type="text" id="nombre" placeholder="ej: Body Serafina" required>
+          </div>
+          <div class="form-group">
+            <label>Categoría *</label>
+            <select id="categoria" required>
+              <option value="">Selecciona...</option>
+              <option value="Bodies">Bodies</option>
+              <option value="Blusas">Blusas</option>
+              <option value="Corsets">Corsets</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label id="lblDescCorta">Descripción Corta (en grid) *</label>
+          <input type="text" id="desc_corta" placeholder="ej: Manga larga con escote en V y nudo frontal" required>
+        </div>
+
+        <div class="form-group">
+          <label id="lblDesc">Descripción Larga (VER MAS) *</label>
+          <textarea id="desc" placeholder="Descripción detallada del producto..." required></textarea>
+        </div>
+
+        <fieldset id="bloqueIndividual" class="bloque-sin-borde">
+        <div class="form-group">
+          <label>Primera Referencia (Color) *</label>
+          <div class="grid-2">
+            <div>
+              <label>Color</label>
+              <div id="coloresContenedor" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;"></div>
+            </div>
+            <div>
+              <label>Nuevo Color (opcional)</label>
+              <input type="text" id="nuevoColor" placeholder="ej: Marfil">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Precio (COP) *</label>
+            <input type="number" id="precio" placeholder="ej: 140000" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Tipo de talla *</label>
+          <div class="tipo-talla" id="crearTipoTalla"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Tallas Disponibles *</label>
+          <div class="tallas-group" id="crearTallas">
+            <label class="checkbox"><input type="checkbox" value="S" checked> S</label>
+            <label class="checkbox"><input type="checkbox" value="M" checked> M</label>
+            <label class="checkbox"><input type="checkbox" value="L" checked> L</label>
+            <label class="checkbox"><input type="checkbox" value="XL"> XL</label>
+          </div>
+        </div>
+
+        </fieldset>
+
+        <div id="bloqueMultiple" hidden>
+          <div class="form-group">
+            <label>Prendas que aparecen en la foto *</label>
+            <p class="ayuda">Agrega la información de cada prenda. El cliente verá la foto junto con el nombre, el precio y las tallas de cada una, y podrá agregarlas al bolso por separado.</p>
+            <div id="piezasContenedor"></div>
+            <button type="button" class="secondary" id="btnAgregarPieza">+ Agregar otra prenda</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label id="lblImagen">Imagen del Producto *</label>
+          <input type="file" id="imagen" accept="image/*" required>
+          <div id="previewImagen" class="img-preview" style="margin-top: 10px;"></div>
+        </div>
+
+        <div id="statusCrear"></div>
+        <button type="submit" id="btnCrear">Crear Producto</button>
+        <button type="button" class="secondary" id="btnCancelarMultiple" hidden style="margin-left: 10px;">Cancelar edición</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- TAB 2: GESTIONAR PRODUCTOS -->
+  <div id="tab-gestionar" class="tab-content">
+    <div class="section">
+      <h2>Gestionar Productos</h2>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+        <div class="form-group">
+          <label>🔍 Buscar por nombre</label>
+          <input type="text" id="buscarProducto" placeholder="Escribe el nombre del producto...">
+        </div>
+        <div class="form-group">
+          <label>🎯 Filtrar por categoría</label>
+          <select id="filtrarCategoria">
+            <option value="">Todas las categorías</option>
+          </select>
+        </div>
+      </div>
+      <div id="productosContenedor"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3: COLORES -->
+  <div id="tab-colores" class="tab-content">
+    <div class="section">
+      <h2>Gestionar Colores Predefinidos</h2>
+      <div id="coloresListaContenedor"></div>
+      <div class="form-group" style="margin-top: 20px;">
+        <label>Agregar Nuevo Color</label>
+        <div style="display: grid; grid-template-columns: 1fr 100px auto; gap: 10px; align-items: flex-end;">
+          <input type="text" id="nuevoColorNombre" placeholder="ej: Turquesa">
+          <input type="color" id="nuevoColorHex" value="#000000">
+          <button type="button" onclick="agregarColorPredefinido()">Agregar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: CATEGORÍAS -->
+  <div id="tab-categorias" class="tab-content">
+    <div class="section">
+      <h2>Gestionar Categorías</h2>
+      <div id="categoriasListaContenedor"></div>
+      <div class="form-group" style="margin-top: 20px;">
+        <label>Agregar Nueva Categoría</label>
+        <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: flex-end;">
+          <input type="text" id="nuevoCategoriaNombre" placeholder="ej: Pantalones">
+          <button type="button" onclick="agregarCategoriaPredefinida()">Agregar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: TRAJES DE TEMPORADA -->
+  <div id="tab-temporada" class="tab-content">
+    <div class="section">
+      <h2 id="lookFormTitulo">Agregar traje de temporada</h2>
+      <p class="ayuda">Un traje es una foto con las prendas del catálogo que lo componen. Aparece en la sección «Trajes de temporada» del catálogo, y al tocarlo el cliente ve sus prendas.</p>
+      <form id="formLook">
+        <div class="form-group">
+          <label for="lookNombre">Título *</label>
+          <input type="text" id="lookNombre" placeholder="ej: Noche en la ciudad" maxlength="60" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label for="lookEtiqueta">Etiqueta (opcional)</label>
+          <input type="text" id="lookEtiqueta" placeholder="ej: Navidad 2026  ·  si la dejas vacía se numera: Look 01, Look 02…" maxlength="30" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label for="lookBuscarPieza">Prendas de este traje</label>
+          <input type="search" id="lookBuscarPieza" placeholder="Buscar una prenda para marcarla…" autocomplete="off">
+          <div id="lookPiezas" class="piezas-lista" role="group" aria-label="Prendas del catálogo"></div>
+          <span id="lookPiezasCuenta" class="piezas-cuenta"></span>
+        </div>
+        <div class="form-group">
+          <label for="lookImagen" id="lookImagenLabel">Foto del traje *</label>
+          <input type="file" id="lookImagen" accept="image/*">
+          <div id="lookPreview" class="img-preview look-preview"></div>
+        </div>
+        <div class="form-group">
+          <label class="check-linea"><input type="checkbox" id="lookActivo" checked> Visible en el catálogo</label>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button type="submit" id="lookGuardar">Agregar traje</button>
+          <button type="button" class="secondary" id="lookCancelar" hidden>Cancelar edición</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="section">
+      <h2>Trajes cargados</h2>
+      <div id="looksLista"></div>
+    </div>
+  </div>
+
+  <!-- TAB 6: COMENTARIOS -->
+  <div id="tab-comentarios" class="tab-content">
+    <div class="section">
+      <h2 id="comFormTitulo">Agregar comentario</h2>
+      <p class="ayuda">Los comentarios aparecen en el catálogo, en «Lo que dicen de nosotras». Los visitantes pueden dejar el suyo desde el catálogo: llega aquí en <strong>«Por revisar»</strong> y tú decides si lo publicas, lo dejas oculto o lo borras. También puedes agregar tú los mensajes que te escriben tus clientas (por Instagram o WhatsApp), <strong>tal como los escribieron</strong>: se publican sin cambiar nada, ni mayúsculas ni signos.</p>
+      <form id="formComentario">
+        <div class="form-group">
+          <label for="comTexto">Comentario *</label>
+          <textarea id="comTexto" rows="3" maxlength="240" placeholder="Pega aquí el mensaje de la clienta"></textarea>
+          <span id="comCuenta" class="piezas-cuenta">0 / 240</span>
+        </div>
+        <div class="form-group">
+          <label for="comAutor">Quién lo escribió (opcional)</label>
+          <input type="text" id="comAutor" maxlength="40" placeholder="ej: el nombre o @usuario de la clienta" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="check-linea"><input type="checkbox" id="comActivo" checked> Visible en el catálogo</label>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button type="submit" id="comGuardar">Agregar comentario</button>
+          <button type="button" class="secondary" id="comCancelar" hidden>Cancelar edición</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="section">
+      <h2>Comentarios cargados</h2>
+      <div id="comLista"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR PRODUCTO -->
+<div id="modalEditarProducto" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Editar Producto</h2>
+      <button class="close-btn" onclick="cerrarModal('modalEditarProducto')">✕</button>
+    </div>
+    <form id="formEditarProducto">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" id="editNombre">
+      </div>
+      <div class="form-group">
+        <label>Descripción Corta</label>
+        <input type="text" id="editDescCorta">
+      </div>
+      <div class="form-group">
+        <label>Descripción Larga</label>
+        <textarea id="editDesc"></textarea>
+      </div>
+      <button type="submit">Guardar Cambios</button>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL EDITAR REFERENCIA -->
+<div id="modalEditarReferencia" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Editar Referencia</h2>
+      <button class="close-btn" onclick="cerrarModal('modalEditarReferencia')">✕</button>
+    </div>
+    <form id="formEditarReferencia">
+      <div class="form-group">
+        <label>Color</label>
+        <input type="text" id="editRefColor" disabled>
+      </div>
+      <div class="form-group">
+        <label>Precio (COP)</label>
+        <input type="number" id="editRefPrecio">
+      </div>
+      <div class="form-group">
+        <label>Tipo de talla</label>
+        <div class="tipo-talla" id="editRefTipoTalla"></div>
+      </div>
+      <div class="form-group">
+        <label>Tallas Disponibles</label>
+        <div class="tallas-group" id="editRefTallas"></div>
+      </div>
+      <div class="form-group">
+        <label>Cambiar Imagen (opcional)</label>
+        <input type="file" id="editRefImagen" accept="image/*">
+        <div id="editRefPreview" class="img-preview" style="margin-top: 10px;"></div>
+      </div>
+      <button type="submit">Guardar Referencia</button>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL NUEVA REFERENCIA -->
+<div id="modalNuevaReferencia" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Agregar Nueva Referencia</h2>
+      <button class="close-btn" onclick="cerrarModal('modalNuevaReferencia')">✕</button>
+    </div>
+    <form id="formNuevaReferencia">
+      <div class="form-group">
+        <label>Color *</label>
+        <div id="nuevoRefColoresContenedor" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;"></div>
+        <input type="text" id="nuevoRefColorCustom" placeholder="O escribe un nuevo color" style="margin-top: 10px;">
+        <div id="avisoColorExistente" class="aviso-color" hidden></div>
+      </div>
+      <!-- Precio individual (productos normales) -->
+      <div class="form-group" id="nuevoRefBloquePrecio">
+        <label>Precio (COP) *</label>
+        <input type="number" id="nuevoRefPrecio" placeholder="Dejar igual al producto base o cambiar">
+      </div>
+      <!-- Precios por pieza (productos múltiples) -->
+      <div class="form-group" id="nuevoRefBloquePiezas" hidden>
+        <label>Precio de cada prenda en este color</label>
+        <p class="ayuda" style="margin-bottom:12px;">El nombre de cada prenda viene del conjunto. Ajusta el precio para este color si es diferente.</p>
+        <div id="nuevoRefPiezasLista"></div>
+      </div>
+      <div class="form-group">
+        <label>Tipo de talla</label>
+        <div class="tipo-talla" id="nuevoRefTipoTalla"></div>
+      </div>
+      <div class="form-group">
+        <label>Tallas Disponibles</label>
+        <div class="tallas-group" id="nuevoRefTallas"></div>
+      </div>
+      <div class="form-group">
+        <label>Imagen *</label>
+        <input type="file" id="nuevoRefImagen" accept="image/*" required>
+        <div id="nuevoRefPreview" class="img-preview" style="margin-top: 10px;"></div>
+      </div>
+      <button type="submit">Agregar Referencia</button>
+    </form>
+  </div>
+</div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://fhlpogqskudbtrashikb.supabase.co';
+const GITHUB_TOKEN = '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';
+const GITHUB_OWNER = 'AngelesAngeles';
+const GITHUB_REPO = 'Catalogo';
+
+let SUPABASE_KEY = sessionStorage.getItem('supabase_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZobHBvZ3Fza3VkYnRyYXNoaWtiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4OTc1MTM5OCwiZXhwIjoyMTA1MzI3Mzk4fQ.MIJPNovKKtQPEY_5j0Yy_7oH4jKBIxUF9mzO7bIbtAI';
+
+/* La paleta real vive en la tabla paleta_colores de Supabase.
+   Esta lista solo se usa de respaldo si Supabase no responde, para que el
+   panel nunca quede sin colores con los que trabajar. */
+const COLORES_RESPALDO = [
+  { nombre: 'Marfil', hex: '#faf5f1' },
+  { nombre: 'Negro', hex: '#1a1a1a' },
+  { nombre: 'Blanco', hex: '#ffffff' },
+  { nombre: 'Rojo', hex: '#c91f16' },
+  { nombre: 'Rosa', hex: '#f7c6d1' },
+  { nombre: 'Azul', hex: '#a8d5e2' },
+  { nombre: 'Verde', hex: '#b8e0d2' },
+  { nombre: 'Chocolate', hex: '#6b4423' },
+  { nombre: 'Vinotinto', hex: '#702c3d' },
+  { nombre: 'Baby blue', hex: '#a8d5e2' },
+  { nombre: 'Verde pistacho', hex: '#b8e0d2' },
+  { nombre: 'Amarillo mantequilla', hex: '#f5e6c8' },
+  { nombre: 'Crema', hex: '#f5e6c8' },
+  { nombre: 'Café', hex: '#d4a574' }
+];
+let coloresPredefinidos = COLORES_RESPALDO.map(c => ({ ...c }));
+
+let productoActual = null;
+let referenciaActual = null;
+let productosTotal = [];
+let categoriasTotal = [];
+let busquedaTexto = '';
+let filtroCategoria = '';
+
+async function toast(msg, tipo = 'success') {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  el.style.background = tipo === 'error' ? '#dc3545' : '#28a745';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function cambiarTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.target.classList.add('active');
+
+  if (tab === 'gestionar') cargarProductos();
+  if (tab === 'colores') mostrarColoresPredefinidos();
+  if (tab === 'temporada') cargarLooksAdmin();
+  if (tab === 'comentarios') cargarComentariosAdmin();
+}
+
+function renderColoresBotones(contenedorId, onSelect) {
+  const contenedor = document.getElementById(contenedorId);
+  contenedor.innerHTML = coloresPredefinidos.map(c => `
+    <button type="button" class="color-btn" style="background: ${c.hex}" title="${c.nombre}" onclick="seleccionarColor('${c.nombre}', '${c.hex}', '${contenedorId}', event)"></button>
+  `).join('');
+}
+
+function seleccionarColor(nombre, hex, contenedorId, event) {
+  event.preventDefault();
+  document.querySelectorAll(`#${contenedorId} .color-btn`).forEach(b => b.classList.remove('selected'));
+  event.target.classList.add('selected');
+  document.getElementById(contenedorId.replace('Contenedor', '')) ?
+    (document.getElementById(contenedorId.replace('Contenedor', '')).value = nombre) : null;
+}
+
+function mostrarColoresPredefinidos() {
+  const lista = document.getElementById('coloresListaContenedor');
+  lista.innerHTML = coloresPredefinidos.map((c, i) => `
+    <div style="display: flex; align-items: center; gap: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px;">
+      <div class="color-btn" style="background: ${c.hex}; border: 1px solid #ddd;"></div>
+      <span style="flex: 1;">${c.nombre} (${c.hex})</span>
+      <button type="button" class="danger" style="padding: 6px 12px;" onclick="eliminarColorPredefinido(${i})">Eliminar</button>
+    </div>
+  `).join('');
+}
+
+/* Cabeceras de Supabase, iguales a las que ya usa el resto del panel */
+function cabecerasSupabase() {
+  return {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json'
+  };
+}
+
+/* Trae la paleta desde Supabase al abrir el panel */
+async function cargarPaletaColores() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/paleta_colores?order=nombre`, {
+      headers: cabecerasSupabase()
+    });
+    if (!res.ok) {
+      console.warn('paleta_colores no disponible (' + res.status + '): se usa la lista de respaldo');
+    } else {
+      const filas = await res.json();
+      if (Array.isArray(filas) && filas.length) {
+        coloresPredefinidos = filas.map(f => ({ id: f.id, nombre: f.nombre, hex: f.hex }));
+      }
+    }
+  } catch (err) {
+    console.error('Error cargando la paleta de colores:', err);
+  }
+  refrescarColores();
+}
+
+/* Repinta la lista y las cuadrículas de muestras, conservando el color elegido */
+function refrescarColores() {
+  ['coloresContenedor', 'nuevoRefColoresContenedor'].forEach(id => {
+    const cont = document.getElementById(id);
+    if (!cont || !cont.innerHTML.trim()) return;
+    const elegido = cont.querySelector('.color-btn.selected')?.title || null;
+    renderColoresBotones(id);
+    if (elegido) {
+      const b = [...cont.querySelectorAll('.color-btn')].find(x => x.title === elegido);
+      if (b) b.classList.add('selected');
+    }
+  });
+  if (document.getElementById('coloresListaContenedor')) mostrarColoresPredefinidos();
+}
+
+async function agregarColorPredefinido() {
+  const campo = document.getElementById('nuevoColorNombre');
+  const nombre = campo.value.trim();
+  const hex = document.getElementById('nuevoColorHex').value;
+  if (!nombre || !hex) return toast('Completa nombre y color', 'error');
+  if (coloresPredefinidos.some(c => c.nombre.toLowerCase() === nombre.toLowerCase()))
+    return toast(`"${nombre}" ya está en la paleta`, 'error');
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/paleta_colores`, {
+      method: 'POST',
+      headers: { ...cabecerasSupabase(), 'Prefer': 'return=representation' },
+      body: JSON.stringify({ nombre, hex })
+    });
+    if (!res.ok) {
+      console.error('No se pudo guardar el color:', res.status, await res.text());
+      return toast(res.status === 409 ? `"${nombre}" ya existe` : `No se guardó (error ${res.status})`, 'error');
+    }
+    const filas = await res.json();
+    coloresPredefinidos.push({ id: Array.isArray(filas) ? filas[0]?.id : undefined, nombre, hex });
+    campo.value = '';
+    refrescarColores();
+    toast('Color agregado ✓');            // solo si Supabase confirmó
+  } catch (err) {
+    console.error(err);
+    toast('Sin conexión: el color no se guardó', 'error');
+  }
+}
+
+async function eliminarColorPredefinido(i) {
+  const color = coloresPredefinidos[i];
+  if (!color) return;
+  if (!confirm(`¿Eliminar "${color.nombre}" de la paleta?`)) return;
+
+  if (color.id != null) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/paleta_colores?id=eq.${color.id}`, {
+        method: 'DELETE', headers: cabecerasSupabase()
+      });
+      if (!res.ok) {
+        console.error('No se pudo eliminar el color:', res.status, await res.text());
+        return toast(`No se eliminó (error ${res.status})`, 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      return toast('Sin conexión: no se eliminó', 'error');
+    }
+  }
+  coloresPredefinidos.splice(i, 1);
+  refrescarColores();
+  toast('Color eliminado ✓');
+}
+
+/* ── Tallas: normales o numéricas ─────────────────────────────────────────
+   No hay columna nueva en Supabase: las tallas elegidas se guardan tal cual en
+   el campo "tallas" de la referencia (["S","M"] o ["8","10"]). El "tipo" se
+   deduce de los valores, así que no hace falta migrar la base. */
+const TALLAS_NORMALES   = ['S', 'M', 'L', 'XL'];
+const TALLAS_NUMERICAS  = ['8', '10', '12', '14', '16'];
+const TALLAS_NORMALES_POR_DEFECTO = ['S', 'M', 'L'];
+const TALLA_UNICA_VALOR = 'Única';     // así se guarda: tallas = ["Única"]
+
+function tipoDeTallas(lista) {
+  const l = (lista || []).map(t => String(t));
+  if (l.some(t => /^[uú]nica$/i.test(t))) return 'unica';
+  return l.some(t => TALLAS_NUMERICAS.includes(t)) ? 'numericas' : 'normales';
+}
+
+function etiquetaTallas(lista) {
+  const l = lista || [];
+  if (!l.length) return 'Sin tallas';
+  const tipo = tipoDeTallas(l);
+  if (tipo === 'unica') return 'Talla única';
+  return tipo === 'numericas' ? 'Talla ' + l.join(', ') : l.join(', ');
+}
+
+/* Dibuja el selector de tipo y los checkboxes de tallas en dos contenedores */
+function montarTallas(idTipo, idTallas, tipoInicial, marcadasIniciales) {
+  const cTipo = document.getElementById(idTipo);
+  const cTallas = document.getElementById(idTallas);
+  if (!cTipo || !cTallas) return;
+
+  const pintar = (tipo, marcadas) => {
+    if (tipo === 'unica') {
+      /* Un solo checkbox fijo y marcado: así los tres formularios guardan
+         ["Única"] con el mismo código de siempre, sin que haya nada que elegir. */
+      cTallas.innerHTML = `
+        <label class="checkbox checkbox--fija"><input type="checkbox" value="${TALLA_UNICA_VALOR}" checked disabled> ${TALLA_UNICA_VALOR}</label>
+        <p class="nota-talla">Se vende en una sola talla: la clienta no tendrá que elegir.</p>`;
+      return;
+    }
+    const lista = tipo === 'numericas' ? TALLAS_NUMERICAS : TALLAS_NORMALES;
+    cTallas.innerHTML = lista.map(t => `
+      <label class="checkbox"><input type="checkbox" value="${t}" ${marcadas.includes(t) ? 'checked' : ''}> ${t}</label>
+    `).join('');
+  };
+
+  const nombre = 'tipoTalla_' + idTipo;
+  cTipo.innerHTML = `
+    <label><input type="radio" name="${nombre}" value="normales" ${tipoInicial !== 'numericas' && tipoInicial !== 'unica' ? 'checked' : ''}>
+      Tallas normales <small>(S, M, L, XL)</small></label>
+    <label><input type="radio" name="${nombre}" value="numericas" ${tipoInicial === 'numericas' ? 'checked' : ''}>
+      Tallas numéricas <small>(8, 10, 12, 14, 16)</small></label>
+    <label><input type="radio" name="${nombre}" value="unica" ${tipoInicial === 'unica' ? 'checked' : ''}>
+      Talla única</label>`;
+
+  cTipo.querySelectorAll('input[type=radio]').forEach(r => {
+    r.addEventListener('change', () => {
+      // al cambiar de tipo, las tallas del otro tipo no aplican: se parte de cero
+      pintar(r.value, r.value === 'normales' ? TALLAS_NORMALES_POR_DEFECTO : []);   // única y numéricas parten sin marcar
+    });
+  });
+  pintar(tipoInicial, marcadasIniciales);
+}
+
+montarTallas('crearTipoTalla', 'crearTallas', 'normales', TALLAS_NORMALES_POR_DEFECTO);
+document.getElementById('formCrearProducto').addEventListener('reset', () => {
+  // form.reset() devuelve el radio al valor del HTML pero no redibuja los checkboxes
+  setTimeout(() => montarTallas('crearTipoTalla', 'crearTallas', 'normales', TALLAS_NORMALES_POR_DEFECTO), 0);
+});
+
+function generarId(nombre) {
+  return nombre.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+}
+
+document.getElementById('formCrearProducto').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (tipoProducto === 'multiple') return guardarMultiple();
+
+  const nombre = document.getElementById('nombre').value;
+  const categoria = document.getElementById('categoria').value;
+  const desc_corta = document.getElementById('desc_corta').value;
+  const desc = document.getElementById('desc').value;
+  const precio = parseInt(document.getElementById('precio').value);
+  const imagen = document.getElementById('imagen').files[0];
+
+  if (!imagen) return toast('Selecciona una imagen', 'error');
+
+  const tallas = Array.from(document.querySelectorAll('#formCrearProducto .checkbox input:checked')).map(i => i.value);
+  if (!tallas.length) return toast('Selecciona al menos una talla', 'error');
+
+  // Obtener color seleccionado
+  const colorSeleccionado = document.querySelector('#coloresContenedor .color-btn.selected');
+  let colorNombre = colorSeleccionado ? colorSeleccionado.title : document.getElementById('nuevoColor').value;
+
+  if (!colorNombre) return toast('Selecciona o escribe un color', 'error');
+
+  const status = document.getElementById('statusCrear');
+  status.innerHTML = '<div class="status loading">Creando producto...</div>';
+
+  /* Si el producto se crea pero falla un paso posterior, se borra para no
+     dejarlo a medias: era lo que provocaba el 409 en cada reintento. */
+  let idCreadoEnEsteIntento = null;
+
+  try {
+    const id = generarId(nombre);
+
+    // Crear producto en Supabase
+    const resProducto = await fetch(`${SUPABASE_URL}/rest/v1/productos`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id, nom: nombre, cat: categoria, desc_corta, desc })
+    });
+
+    if (!resProducto.ok) {
+      const detalle = await resProducto.text();
+      console.error('POST productos:', resProducto.status, detalle);
+      if (resProducto.status === 409) {
+        throw new Error(`Ya existe un producto llamado "${nombre}". Usa otro nombre o edítalo desde Gestionar Productos.`);
+      }
+      throw new Error(`No se creó el producto (error ${resProducto.status}): ${detalle.slice(0, 160)}`);
+    }
+    idCreadoEnEsteIntento = id;
+
+    // Subir imagen a GitHub
+    const nombreArchivo = `${id}-${colorNombre.toLowerCase().replace(/\s+/g, '-')}.jpg`;
+    const imagenBase64 = await leerArchivoBase64(imagen);
+    const rutaGithub = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/media/${nombreArchivo}`;
+
+    /* GitHub rechaza con 422 si el archivo ya existe y no se envía su "sha".
+       Esto pasaba con imágenes huérfanas de intentos anteriores que fallaron
+       después de subir la foto (p. ej. si luego fallaba crear la referencia).
+       Se consulta primero si ya existe para reutilizar su sha y sobrescribirla. */
+    let shaExistente = null;
+    try {
+      const resExistente = await fetch(rutaGithub, {
+        headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+      });
+      if (resExistente.ok) shaExistente = (await resExistente.json()).sha;
+    } catch { /* si esta consulta falla, se intenta crear igual más abajo */ }
+
+    const resGithub = await fetch(rutaGithub, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: `Add image: ${nombreArchivo}`,
+        content: imagenBase64.split(',')[1],
+        ...(shaExistente ? { sha: shaExistente } : {})
+      })
+    });
+
+    if (!resGithub.ok) {
+      const detalle = await resGithub.text();
+      console.error('PUT GitHub:', resGithub.status, detalle);
+      throw new Error(`No se subió la imagen a GitHub (error ${resGithub.status}): ${detalle.slice(0, 160)}`);
+    }
+
+    const imagenUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/media/${nombreArchivo}`;
+
+    // Encontrar color en predefinidos
+    const colorObj = coloresPredefinidos.find(c => c.nombre === colorNombre) ||
+                      { nombre: colorNombre, hex: '#000000' };
+
+    // Crear referencia en Supabase
+    const resReferencia = await fetch(`${SUPABASE_URL}/rest/v1/referencias`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        producto_id: id,
+        color: colorNombre,
+        hex: colorObj.hex,
+        precio,
+        imagen_url: imagenUrl,
+        tallas
+      })
+    });
+
+    if (!resReferencia.ok) {
+      const detalle = await resReferencia.text();
+      console.error('POST referencias:', resReferencia.status, detalle);
+      throw new Error(`No se creó la referencia (error ${resReferencia.status}): ${detalle.slice(0, 160)}`);
+    }
+
+    idCreadoEnEsteIntento = null;          // todo salió bien, no hay nada que deshacer
+    status.innerHTML = '<div class="status success">✓ Producto creado exitosamente</div>';
+    document.getElementById('formCrearProducto').reset();
+    toast('Producto creado ✓');
+
+  } catch (err) {
+    console.error(err);
+
+    /* Deshacer el producto a medias: sin esto quedaba en la base sin imagen ni
+       color, y el siguiente intento con el mismo nombre fallaba con 409. */
+    if (idCreadoEnEsteIntento) {
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/productos?id=eq.${idCreadoEnEsteIntento}`, {
+          method: 'DELETE',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+        });
+        console.warn('Se deshizo el producto incompleto:', idCreadoEnEsteIntento);
+      } catch (e2) {
+        console.error('No se pudo deshacer el producto incompleto:', e2);
+      }
+    }
+
+    status.innerHTML = `<div class="status error">❌ ${err.message}</div>`;
+    toast(err.message, 'error');
+  }
+});
+
+async function cargarProductos() {
+  try {
+    // Cargar productos
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/productos?order=cat,nom`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+
+    const productos = await res.json();
+    productosTotal = [];
+
+    /* Una sola petición trae TODAS las referencias y se agrupan acá.
+       Antes era una por producto, en fila: con 20 productos, 21 viajes a
+       Supabase. Ahora son 2, sin importar cuántos productos haya. */
+    const resRefs = await fetch(`${SUPABASE_URL}/rest/v1/referencias?order=producto_id,color`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+    const todasLasReferencias = resRefs.ok ? await resRefs.json() : [];
+    if (!resRefs.ok) console.error('No se pudieron cargar las referencias:', resRefs.status);
+
+    const refsPorProducto = new Map();
+    for (const r of todasLasReferencias) {
+      if (!refsPorProducto.has(r.producto_id)) refsPorProducto.set(r.producto_id, []);
+      refsPorProducto.get(r.producto_id).push(r);
+    }
+
+    for (let p of productos) {
+      productosTotal.push({ ...p, referencias: refsPorProducto.get(p.id) || [] });
+    }
+
+    /* Las categorías ya se cargan al abrir el panel y cada vez que se crea o
+       borra una; pedirlas otra vez acá era una petición repetida. */
+    mostrarProductosFiltrados();
+
+  } catch (err) {
+    console.error(err);
+    toast(err.message, 'error');
+  }
+}
+
+function mostrarProductosFiltrados() {
+  let productosFiltrados = productosTotal;
+
+  // Filtrar por búsqueda
+  if (busquedaTexto) {
+    productosFiltrados = productosFiltrados.filter(p =>
+      p.nom.toLowerCase().includes(busquedaTexto.toLowerCase())
+    );
+  }
+
+  // Filtrar por categoría
+  if (filtroCategoria) {
+    productosFiltrados = productosFiltrados.filter(p => p.cat === filtroCategoria);
+  }
+
+  const productosContenedor = document.getElementById('productosContenedor');
+  let htmlPorCategoria = {};
+
+  for (let p of productosFiltrados) {
+    if (!htmlPorCategoria[p.cat]) htmlPorCategoria[p.cat] = '';
+    if (p.tipo === 'multiple') { htmlPorCategoria[p.cat] += htmlProductoMultiple(p); continue; }
+
+    htmlPorCategoria[p.cat] += `
+      <div class="producto-item">
+        <div class="producto-header">
+          <div>
+            <h3>${p.nom}</h3>
+            <small>${p.cat}</small>
+          </div>
+          <div>
+            <button type="button" class="secondary btn-editar-producto" style="margin-right: 10px;" data-id="${p.id}" data-nom="${p.nom}" data-corta="${p.desc_corta}" data-desc="${p.desc}">Editar</button>
+            <button type="button" class="danger btn-eliminar-producto" data-id="${p.id}">Eliminar</button>
+          </div>
+        </div>
+
+        ${p.referencias.map(r => `
+          <div class="referencia-item">
+            <div class="img-preview">${r.imagen_url ? `<img src="${r.imagen_url}" alt="${r.color}">` : 'Sin imagen'}</div>
+            <div style="text-align: center;">
+              <div style="width: 40px; height: 40px; background: ${r.hex}; border-radius: 4px; margin: 0 auto;"></div>
+            </div>
+            <div class="referencia-info">
+              <span><strong>${r.color}</strong></span>
+              <span>$${r.precio.toLocaleString('es-CO')}</span>
+              <span>${etiquetaTallas(r.tallas)}</span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button type="button" class="secondary btn-editar-referencia" style="padding: 6px 12px; font-size: 12px;" data-producto-id="${p.id}" data-ref-id="${r.id}" data-color="${r.color}" data-precio="${r.precio}" data-tallas='${JSON.stringify(r.tallas).replace(/'/g, "&#39;")}' data-imagen="${r.imagen_url || ''}">Editar</button>
+              <button type="button" class="danger btn-eliminar-referencia" style="padding: 6px 12px; font-size: 12px;" data-ref-id="${r.id}">Eliminar</button>
+            </div>
+          </div>
+          ${extrasDe(r).length ? `
+            <div class="fotos-extra">
+              ${extrasDe(r).map((f, k) => `
+                <div class="foto-extra">
+                  <img src="${f.url || f}" alt="">
+                  <span>${f.nombre || (p.nom + ' - ' + r.color + ' ' + (k + 1))}</span>
+                  <button type="button" class="danger btn-eliminar-foto-extra" data-ref-id="${r.id}" data-archivo="${f.archivo || ''}" data-url="${f.url || f}">Eliminar</button>
+                </div>`).join('')}
+            </div>` : ''}
+        `).join('')}
+
+        <button type="button" class="secondary" style="width: 100%; margin-top: 15px;" onclick="abrirNuevaReferencia('${p.id}', ${p.referencias.length > 0 ? p.referencias[0].precio : 0})">+ Agregar Color</button>
+      </div>
+    `;
+  }
+
+  productosContenedor.innerHTML = Object.entries(htmlPorCategoria).map(([cat, html]) => `
+    <div style="margin-bottom: 30px;">
+      <h3 style="color: #c91f16; border-bottom: 2px solid #c91f16; padding-bottom: 10px;">${cat}</h3>
+      ${html}
+    </div>
+  `).join('') || '<p style="text-align: center; color: #999;">No hay productos que coincidan</p>';
+}
+
+async function eliminarProducto(id) {
+  if (!confirm('¿Eliminar este producto y todas sus referencias?')) return;
+
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/productos?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+
+    cargarProductos();
+    toast('Producto eliminado ✓');
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function eliminarReferencia(id) {
+  if (!confirm('¿Eliminar esta referencia?')) return;
+
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/referencias?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+
+    cargarProductos();
+    toast('Referencia eliminada ✓');
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+function abrirEditarProducto(id, nom, desc_corta, desc) {
+  try {
+    productoActual = id;
+    document.getElementById('editNombre').value = nom;
+    document.getElementById('editDescCorta').value = desc_corta;
+    document.getElementById('editDesc').value = desc;
+    abrirModal('modalEditarProducto');
+  } catch (err) {
+    console.error('Error abriendo modal de editar:', err);
+    toast('Error abriendo modal de edición', 'error');
+  }
+}
+
+function abrirEditarReferencia(productoId, refId, color, precio, tallas, imagenUrl) {
+  productoActual = productoId;
+  referenciaActual = refId;
+
+  document.getElementById('editRefColor').value = color;
+  document.getElementById('editRefPrecio').value = precio;
+
+  const tallasArray = JSON.parse(tallas) || [];
+  /* el tipo se deduce de las tallas guardadas; así una referencia con tallas
+     numéricas se abre en "numéricas" y no pierde sus valores al guardar */
+  montarTallas('editRefTipoTalla', 'editRefTallas', tipoDeTallas(tallasArray), tallasArray);
+
+  if (imagenUrl) {
+    document.getElementById('editRefPreview').innerHTML = `<img src="${imagenUrl}" alt="${color}">`;
+  }
+
+  abrirModal('modalEditarReferencia');
+}
+
+function abrirNuevaReferencia(productoId, precioBase) {
+  productoActual = productoId;
+
+  renderColoresBotones('nuevoRefColoresContenedor');
+
+  /* Detectar si el producto es múltiple para mostrar precios por pieza */
+  const prodBase = (typeof productosTotal !== 'undefined' ? productosTotal : []).find(p => p.id === productoId);
+  const esMultiple = prodBase?.tipo === 'multiple';
+  const piezasBase = esMultiple && Array.isArray(prodBase?.piezas) ? prodBase.piezas : [];
+
+  document.getElementById('nuevoRefBloquePrecio').hidden = esMultiple;
+  document.getElementById('nuevoRefBloquePiezas').hidden = !esMultiple;
+  document.getElementById('nuevoRefPrecio').required = !esMultiple;
+
+  if (esMultiple) {
+    /* Construir una fila por pieza con el precio base de la pieza */
+    const lista = document.getElementById('nuevoRefPiezasLista');
+    lista.replaceChildren();
+    piezasBase.forEach((z, i) => {
+      const row = document.createElement('div');
+      row.className = 'form-group pieza-precio-row';
+      row.style.cssText = 'display:grid;grid-template-columns:1fr 160px;gap:10px;align-items:center;margin-bottom:12px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;background:#FCFAF9';
+      row.innerHTML = `
+        <div>
+          <strong style="font-size:14px;">${esc(z.nombre)}</strong>
+          ${z.color ? `<span style="font-size:12px;color:#888;margin-left:8px;">(base: ${esc(z.color)})</span>` : ''}
+        </div>
+        <div>
+          <label style="font-size:11px;color:#666;display:block;margin-bottom:3px;">Precio COP</label>
+          <input type="number" class="pieza-precio-input" data-idx="${i}" data-nombre="${esc(z.nombre)}"
+            value="${z.precio}" min="0" step="1000" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
+        </div>`;
+      lista.appendChild(row);
+    });
+    /* Precio de la referencia = promedio para el campo interno (no se muestra) */
+    document.getElementById('nuevoRefPrecio').value = piezasBase.length
+      ? Math.round(piezasBase.reduce((s, z) => s + z.precio, 0) / piezasBase.length)
+      : (precioBase || 0);
+  } else {
+    document.getElementById('nuevoRefPrecio').value = precioBase;
+  }
+
+  /* Tallas: parte con las del conjunto si ya tiene referencias, si no con normales */
+  const tallasBase = (prodBase?.referencias?.[0]?.tallas) || [];
+  montarTallas('nuevoRefTipoTalla', 'nuevoRefTallas',
+    tallasBase.length ? tipoDeTallas(tallasBase) : 'normales',
+    tallasBase.length ? tallasBase : TALLAS_NORMALES_POR_DEFECTO);
+
+  actualizarAvisoColorExistente();
+  abrirModal('modalNuevaReferencia');
+}
+
+function abrirModal(id) {
+  document.getElementById(id).classList.add('active');
+}
+
+function cerrarModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+function leerArchivoBase64(archivo) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(archivo);
+  });
+}
+
+/* ── Fotos del mismo color ─────────────────────────────────────────────────
+   La foto original de cada color vive en referencias.imagen_url y NUNCA se
+   pisa. Las fotos adicionales del MISMO color se guardan en
+   referencias.imagenes_extra (jsonb), cada una como { url, archivo, nombre }:
+     vestido-amelie-azul.jpg      ← original
+     vestido-amelie-azul-1.jpg    ← «Vestido Amelie - Azul 1»
+     vestido-amelie-azul-2.jpg    ← «Vestido Amelie - Azul 2»  …                */
+function normalizarColor(c) { return String(c || '').trim().toLowerCase().replace(/\s+/g, ' '); }
+function slugColor(c) { return c.toLowerCase().replace(/\s+/g, '-'); }
+function extrasDe(ref) { return Array.isArray(ref?.imagenes_extra) ? ref.imagenes_extra : []; }
+function siguienteNumeroExtra(lista) {
+  const nums = (lista || [])
+    .map(f => parseInt(String(f?.archivo || f?.url || f).match(/-(\d+)\.jpg$/)?.[1], 10))
+    .filter(n => !isNaN(n));
+  return (nums.length ? Math.max(...nums) : 0) + 1;     // si se borró la 2, la próxima es 4: nunca repite un nombre
+}
+const urlGithub = archivo => `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/media/${archivo}`;
+const urlRaw    = archivo => `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/media/${archivo}`;
+
+/* Para REEMPLAZAR una imagen a propósito (cambiar la foto de un color, o un
+   archivo huérfano de un intento fallido): GitHub exige el "sha" del archivo
+   existente; sin él responde 422. */
+async function subirImagenReemplazando(nombreArchivo, imagenDataUrl, mensaje) {
+  let sha = null;
+  try {
+    const r = await fetch(urlGithub(nombreArchivo), { headers: { 'Authorization': `token ${GITHUB_TOKEN}` } });
+    if (r.ok) sha = (await r.json()).sha;
+  } catch { /* si la consulta falla, se intenta crear igual */ }
+
+  const res = await fetch(urlGithub(nombreArchivo), {
+    method: 'PUT',
+    headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: mensaje, content: imagenDataUrl.split(',')[1], ...(sha ? { sha } : {}) })
+  });
+  if (!res.ok) {
+    const detalle = await res.text();
+    console.error('PUT GitHub:', res.status, detalle);
+    throw new Error(`No se subió la imagen a GitHub (error ${res.status}): ${detalle.slice(0, 160)}`);
+  }
+}
+
+/* Lee las fotos adicionales que tiene hoy el color (también comprueba que el
+   campo exista en la base, antes de subir nada a GitHub). */
+async function leerExtrasActuales(refId) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/referencias?id=eq.${refId}&select=imagenes_extra`, { headers: cabecerasSupabase() });
+  if (!res.ok) {
+    const detalle = await res.text();
+    console.error('leer imagenes_extra:', res.status, detalle);
+    if (/imagenes_extra/i.test(detalle)) {
+      throw new Error('Falta crear el campo «imagenes_extra» en la tabla referencias de Supabase. Corre el SQL de las fotos adicionales y vuelve a intentar.');
+    }
+    throw new Error(`No se pudo leer la referencia (error ${res.status})`);
+  }
+  const filas = await res.json();
+  return Array.isArray(filas?.[0]?.imagenes_extra) ? filas[0].imagenes_extra : [];
+}
+
+/* Agrega una foto al color que YA existe, sin tocar la original */
+async function agregarFotoExtra(prod, ref, imagen) {
+  try {
+    const actuales = await leerExtrasActuales(ref.id);
+    const base64 = (await leerArchivoBase64(imagen)).split(',')[1];
+
+    let n = siguienteNumeroExtra(actuales), foto = null, intentos = 0;
+    while (!foto && intentos++ < 25) {
+      const archivo = `${prod.id}-${slugColor(ref.color)}-${n}.jpg`;
+      const res = await fetch(urlGithub(archivo), {
+        method: 'PUT',
+        headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `Add extra image: ${archivo}`, content: base64 })   // sin sha: jamás pisa un archivo
+      });
+      if (res.ok) {
+        foto = { url: urlRaw(archivo), archivo, nombre: `${prod.nom} - ${ref.color} ${n}` };
+      } else {
+        const detalle = await res.text();
+        // 422 con "sha" = ya hay un archivo con ese nombre (p. ej. huérfano): se prueba el número siguiente
+        if (res.status === 422 && /sha/i.test(detalle)) { n++; continue; }
+        console.error('PUT GitHub:', res.status, detalle);
+        throw new Error(`No se subió la imagen a GitHub (error ${res.status}): ${detalle.slice(0, 160)}`);
+      }
+    }
+    if (!foto) throw new Error('No se encontró un nombre libre para la imagen en GitHub');
+
+    const resPatch = await fetch(`${SUPABASE_URL}/rest/v1/referencias?id=eq.${ref.id}`, {
+      method: 'PATCH', headers: cabecerasSupabase(),
+      body: JSON.stringify({ imagenes_extra: [...actuales, foto] })
+    });
+    if (!resPatch.ok) {
+      console.error('PATCH imagenes_extra:', resPatch.status, await resPatch.text());
+      throw new Error(`No se pudo guardar la foto (error ${resPatch.status})`);
+    }
+
+    document.getElementById('formNuevaReferencia').reset();
+    document.getElementById('nuevoRefPreview').innerHTML = '';
+    cerrarModal('modalNuevaReferencia');
+    cargarProductos();
+    toast(`Foto agregada como «${foto.nombre}» ✓`);
+  } catch (err) {
+    console.error(err);
+    toast(err.message, 'error');
+  }
+}
+
+/* Quita una foto adicional: primero del catálogo, después el archivo de GitHub */
+async function eliminarFotoExtra(refId, archivo, url) {
+  if (!confirm('¿Eliminar esta foto adicional?\n\nSe quita del catálogo y se borra el archivo de GitHub.')) return;
+  try {
+    const actuales = await leerExtrasActuales(refId);
+    const nuevas = actuales.filter(f => (f?.url || f) !== url);
+    const resPatch = await fetch(`${SUPABASE_URL}/rest/v1/referencias?id=eq.${refId}`, {
+      method: 'PATCH', headers: cabecerasSupabase(), body: JSON.stringify({ imagenes_extra: nuevas })
+    });
+    if (!resPatch.ok) {
+      console.error('PATCH imagenes_extra:', resPatch.status, await resPatch.text());
+      throw new Error(`No se pudo eliminar la foto (error ${resPatch.status})`);
+    }
+
+    let aviso = 'Foto eliminada ✓';
+    if (archivo) {
+      try {
+        const resSha = await fetch(urlGithub(archivo), { headers: { 'Authorization': `token ${GITHUB_TOKEN}` } });
+        if (resSha.ok) {
+          const { sha } = await resSha.json();
+          const resDel = await fetch(urlGithub(archivo), {
+            method: 'DELETE',
+            headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: `Delete extra image: ${archivo}`, sha })
+          });
+          if (!resDel.ok) throw new Error('DELETE ' + resDel.status);
+        } else if (resSha.status !== 404) {          // 404 = el archivo ya no existía
+          throw new Error('GET ' + resSha.status);
+        }
+      } catch (e2) {
+        console.error('No se pudo borrar el archivo de GitHub:', e2);
+        aviso = 'Foto quitada del catálogo (el archivo no se pudo borrar de GitHub)';
+      }
+    }
+    cargarProductos();
+    toast(aviso);
+  } catch (err) {
+    console.error(err);
+    toast(err.message, 'error');
+  }
+}
+
+/* Aviso en vivo: si el color elegido ya existe en el producto, la imagen irá como foto adicional */
+function colorElegidoNuevoRef() {
+  const sel = document.querySelector('#nuevoRefColoresContenedor .color-btn.selected');
+  return (sel ? sel.title : (document.getElementById('nuevoRefColorCustom').value || '')).trim();
+}
+function actualizarAvisoColorExistente() {
+  const aviso = document.getElementById('avisoColorExistente');
+  const color = colorElegidoNuevoRef();
+  const prod = productosTotal.find(p => p.id === productoActual);
+  const ref = color && prod ? (prod.referencias || []).find(r => normalizarColor(r.color) === normalizarColor(color)) : null;
+  if (!ref) { aviso.hidden = true; aviso.textContent = ''; return; }
+  const n = siguienteNumeroExtra(extrasDe(ref));
+  aviso.hidden = false;
+  aviso.textContent = `El color «${ref.color}» ya existe en este producto. La imagen se agregará como foto adicional ` +
+    `(«${prod.nom} - ${ref.color} ${n}»), sin cambiar la foto original, el precio ni las tallas de ese color.`;
+}
+
+// Manejador: Editar Producto
+document.getElementById('formEditarProducto').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const nom = document.getElementById('editNombre').value;
+  const desc_corta = document.getElementById('editDescCorta').value;
+  const desc = document.getElementById('editDesc').value;
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/productos?id=eq.${productoActual}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ nom, desc_corta, desc })
+    });
+
+    if (!res.ok) throw new Error('Error actualizando producto');
+
+    cerrarModal('modalEditarProducto');
+    cargarProductos();
+    toast('Producto actualizado ✓');
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+});
+
+// Manejador: Nueva Referencia
+document.getElementById('formNuevaReferencia').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const colorSeleccionado = document.querySelector('#nuevoRefColoresContenedor .color-btn.selected');
+  let colorNombre = colorSeleccionado ? colorSeleccionado.title : document.getElementById('nuevoRefColorCustom').value;
+
+  if (!colorNombre) return toast('Selecciona o escribe un color', 'error');
+
+  /* Para múltiples: recoger el precio de cada pieza */
+  const prodActualObj = productosTotal.find(p => p.id === productoActual);
+  const esMultiRef = prodActualObj?.tipo === 'multiple';
+  let precio, piezasPrecios = [];
+  if (esMultiRef) {
+    const inputs = [...document.querySelectorAll('.pieza-precio-input')];
+    for (const inp of inputs) {
+      const v = parseInt(inp.value);
+      if (!(v > 0)) return toast(`"${inp.dataset.nombre}": escribe un precio válido`, 'error');
+      piezasPrecios.push({ nombre: inp.dataset.nombre, precio: v });
+    }
+    /* precio de la referencia = suma de todas las piezas (el total del conjunto en este color) */
+    precio = piezasPrecios.reduce((s, z) => s + z.precio, 0);
+  } else {
+    precio = parseInt(document.getElementById('nuevoRefPrecio').value);
+  }
+  const imagen = document.getElementById('nuevoRefImagen').files[0];
+
+  if (!imagen) return toast('Selecciona una imagen', 'error');
+
+  /* Si el color ya existe en este producto, la imagen entra como foto adicional
+     de ese color (Producto - Color 1, 2…): no se sobrescribe la original ni se
+     piden otra vez precio y tallas. */
+  const prodActual = productosTotal.find(p => p.id === productoActual);
+  const refExistente = (prodActual?.referencias || []).find(r => normalizarColor(r.color) === normalizarColor(colorNombre));
+  if (refExistente) return agregarFotoExtra(prodActual, refExistente, imagen);
+
+  const tallas = Array.from(document.querySelectorAll('#formNuevaReferencia .checkbox input:checked')).map(i => i.value);
+  if (!tallas.length) return toast('Selecciona al menos una talla', 'error');
+
+  try {
+    // Subir imagen a GitHub (si quedó un archivo huérfano con ese nombre de un intento fallido, se reemplaza)
+    const nombreArchivo = `${productoActual}-${slugColor(colorNombre)}.jpg`;
+    const imagenBase64 = await leerArchivoBase64(imagen);
+    await subirImagenReemplazando(nombreArchivo, imagenBase64, `Add image: ${nombreArchivo}`);
+
+    const imagenUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/media/${nombreArchivo}`;
+
+    // Encontrar color en predefinidos
+    const colorObj = coloresPredefinidos.find(c => c.nombre === colorNombre) ||
+                      { nombre: colorNombre, hex: '#000000' };
+
+    // Crear referencia en Supabase
+    const resRef = await fetch(`${SUPABASE_URL}/rest/v1/referencias`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        producto_id: productoActual,
+        color: colorNombre,
+        hex: colorObj.hex,
+        precio,
+        imagen_url: imagenUrl,
+        tallas,
+        ...(esMultiRef && piezasPrecios.length ? { piezas_precios: piezasPrecios } : {})
+      })
+    });
+
+    if (!resRef.ok) throw new Error('Error creando referencia');
+
+    cerrarModal('modalNuevaReferencia');
+    cargarProductos();
+    toast('Referencia agregada ✓');
+  } catch (err) {
+    console.error(err);
+    toast(err.message, 'error');
+  }
+});
+
+// Manejador: Editar Referencia
+document.getElementById('formEditarReferencia').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const precio = parseInt(document.getElementById('editRefPrecio').value);
+  const imagen = document.getElementById('editRefImagen').files[0];
+  const tallas = Array.from(document.querySelectorAll('#editRefTallas .checkbox input:checked')).map(i => i.value);
+  if (!tallas.length) return toast('Selecciona al menos una talla', 'error');
+
+  try {
+    let imagenUrl = null;
+
+    if (imagen) {
+      const color = document.getElementById('editRefColor').value;
+      const nombreArchivo = `${productoActual}-${color.toLowerCase().replace(/\s+/g, '-')}.jpg`;
+      const imagenBase64 = await leerArchivoBase64(imagen);
+
+      await subirImagenReemplazando(nombreArchivo, imagenBase64, `Update image: ${nombreArchivo}`);
+
+      imagenUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/media/${nombreArchivo}`;
+    }
+
+    const updateData = { precio, tallas };
+    if (imagenUrl) updateData.imagen_url = imagenUrl;
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/referencias?id=eq.${referenciaActual}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updateData)
+    });
+
+    if (!res.ok) throw new Error('Error actualizando referencia');
+
+    cerrarModal('modalEditarReferencia');
+    cargarProductos();
+    toast('Referencia actualizada ✓');
+  } catch (err) {
+    console.error(err);
+    toast(err.message, 'error');
+  }
+});
+
+// ========== FUNCIONES DE CATEGORÍAS ==========
+async function cargarCategorias() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/categorias?order=nombre`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+
+    if (res.status === 404) {
+      // La tabla no existe aún, extrae categorías de productos
+      categoriasTotal = [...new Set(productosTotal.map(p => p.cat))].map(cat => ({ nombre: cat }));
+    } else {
+      categoriasTotal = await res.json();
+    }
+
+    mostrarCategorias();
+    actualizarSelectorCategorias();
+    actualizarSelectorCategoriasFormulario();
+  } catch (err) {
+    console.error('Error cargando categorías:', err);
+  }
+}
+
+function actualizarSelectorCategorias() {
+  const selector = document.getElementById('filtrarCategoria');
+  if (!selector) return;
+
+  const categoriasOpciones = categoriasTotal
+    .map(cat => `<option value="${cat.nombre || cat}">${cat.nombre || cat}</option>`)
+    .join('');
+
+  selector.innerHTML = '<option value="">Todas las categorías</option>' + categoriasOpciones;
+}
+
+function actualizarSelectorCategoriasFormulario() {
+  const selector = document.getElementById('categoria');
+  if (!selector) return;
+
+  const categoriasOpciones = categoriasTotal
+    .map(cat => `<option value="${cat.nombre || cat}">${cat.nombre || cat}</option>`)
+    .join('');
+
+  selector.innerHTML = '<option value="">Selecciona...</option>' + categoriasOpciones;
+}
+
+function mostrarCategorias() {
+  const contenedor = document.getElementById('categoriasListaContenedor');
+  if (!contenedor) return;
+
+  contenedor.innerHTML = categoriasTotal.map(cat => `
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f5f5f5; margin-bottom: 10px; border-radius: 4px;">
+      <span><strong>${cat.nombre || cat}</strong></span>
+      <button type="button" class="danger" style="padding: 4px 12px; font-size: 12px;" onclick="eliminarCategoria('${cat.nombre || cat}')">Eliminar</button>
+    </div>
+  `).join('');
+}
+
+async function agregarCategoriaPredefinida() {
+  const nombre = document.getElementById('nuevoCategoriaNombre').value.trim();
+  if (!nombre) return toast('Ingresa un nombre para la categoría', 'error');
+
+  try {
+    // Intentar agregar a la tabla de categorías
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/categorias`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ nombre })
+    });
+
+    if (!res.ok) {
+      /* Antes, si la tabla no existía (404), la categoría se guardaba solo en
+         la memoria del navegador y aun así se mostraba "agregada ✓". Por eso
+         después fallaba al crear el producto. Ahora siempre avisa la verdad. */
+      const detalle = await res.text();
+      console.error('No se pudo crear la categoría:', res.status, detalle);
+      if (res.status === 404) {
+        toast('No existe la tabla de categorías en la base de datos', 'error');
+      } else if (res.status === 409) {
+        toast(`La categoría "${nombre}" ya existe`, 'error');
+      } else {
+        toast(`No se guardó la categoría (error ${res.status})`, 'error');
+      }
+      return;
+    } else {
+      await cargarCategorias();
+      toast('Categoría agregada ✓');
+    }
+
+    document.getElementById('nuevoCategoriaNombre').value = '';
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function eliminarCategoria(nombre) {
+  if (!confirm('¿Eliminar esta categoría?')) return;
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/categorias?nombre=eq.${encodeURIComponent(nombre)}`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+
+    /* Mismo criterio que al crear: si la base no confirma, se avisa el error
+       en vez de borrarla solo de la pantalla. */
+    if (!res.ok && res.status !== 204) {
+      const detalle = await res.text();
+      console.error('No se pudo eliminar la categoría:', res.status, detalle);
+      toast(res.status === 404
+        ? 'No existe la tabla de categorías en la base de datos'
+        : `No se eliminó la categoría (error ${res.status})`, 'error');
+      return;
+    }
+
+    await cargarCategorias();
+    toast('Categoría eliminada ✓');
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+// ========== EVENT LISTENERS DE BÚSQUEDA Y FILTRO ==========
+document.getElementById('buscarProducto').addEventListener('input', (e) => {
+  busquedaTexto = e.target.value;
+  mostrarProductosFiltrados();
+});
+
+document.getElementById('filtrarCategoria').addEventListener('change', (e) => {
+  filtroCategoria = e.target.value;
+  mostrarProductosFiltrados();
+});
+
+// ========== EVENT LISTENERS PARA BOTONES DE PRODUCTOS ==========
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('btn-editar-producto')) {
+    const id = e.target.getAttribute('data-id');
+    const nom = e.target.getAttribute('data-nom');
+    const corta = e.target.getAttribute('data-corta');
+    const desc = e.target.getAttribute('data-desc');
+    abrirEditarProducto(id, nom, corta, desc);
+  }
+
+  if (e.target.classList.contains('btn-eliminar-producto')) {
+    const id = e.target.getAttribute('data-id');
+    eliminarProducto(id);
+  }
+
+  if (e.target.classList.contains('btn-editar-referencia')) {
+    const productoId = e.target.getAttribute('data-producto-id');
+    const refId = e.target.getAttribute('data-ref-id');
+    const color = e.target.getAttribute('data-color');
+    const precio = e.target.getAttribute('data-precio');
+    const tallas = e.target.getAttribute('data-tallas');
+    const imagen = e.target.getAttribute('data-imagen');
+    abrirEditarReferencia(productoId, refId, color, precio, tallas, imagen);
+  }
+
+  if (e.target.classList.contains('btn-eliminar-referencia')) {
+    const refId = e.target.getAttribute('data-ref-id');
+    eliminarReferencia(refId);
+  }
+
+  if (e.target.classList.contains('btn-eliminar-foto-extra')) {
+    eliminarFotoExtra(
+      e.target.getAttribute('data-ref-id'),
+      e.target.getAttribute('data-archivo'),
+      e.target.getAttribute('data-url')
+    );
+  }
+});
+
+/* ── Trajes de temporada ──────────────────────────────────────────────────
+   Tabla lookbook en Supabase: titulo, etiqueta, imagen_url, archivo (nombre del
+   archivo en GitHub), producto_ids (jsonb con los id de las prendas), orden y
+   activo. La foto de cada traje se sube con un nombre único, así que nunca
+   choca con otro archivo. */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+let looksAdmin = [];            // filas de lookbook, ya ordenadas
+let productosParaLook = [];     // { id, nom, cat } de todos los productos
+let lookEditando = null;        // id del traje que se está editando (null = creando)
+let lookFotoActual = null;      // { url, archivo } de la foto del traje en edición
+let lookbookDisponible = true;  // false si la tabla no existe todavía
+
+const MSJ_SIN_TABLA = 'Falta crear la tabla «lookbook» en Supabase. Corre el SQL de «Trajes de temporada» y recarga.';
+
+async function borrarArchivoGithub(archivo) {
+  if (!archivo) return true;
+  try {
+    const r = await fetch(urlGithub(archivo), { headers: { 'Authorization': `token ${GITHUB_TOKEN}` } });
+    if (r.status === 404) return true;                       // ya no existía
+    if (!r.ok) return false;
+    const { sha } = await r.json();
+    const d = await fetch(urlGithub(archivo), {
+      method: 'DELETE',
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: `Delete image: ${archivo}`, sha })
+    });
+    return d.ok;
+  } catch { return false; }
+}
+
+async function cargarLooksAdmin() {
+  const lista = document.getElementById('looksLista');
+  lista.innerHTML = '<p class="ayuda">Cargando…</p>';
+  try {
+    const [resLooks, resProd] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/lookbook?order=orden,id`, { headers: cabecerasSupabase() }),
+      fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&order=cat,nom`, { headers: cabecerasSupabase() })
+    ]);
+    if (resProd.ok) productosParaLook = (await resProd.json()).filter(p => p.tipo !== 'multiple');   // los conjuntos no se enlazan a trajes
+    if (resLooks.status === 404) {
+      const detalle = await resLooks.text();
+      console.error('lookbook:', resLooks.status, detalle);
+      lookbookDisponible = false;
+      lista.innerHTML = `<p class="status error">${MSJ_SIN_TABLA}</p>`;
+      renderPiezas([]);
+      return;
+    }
+    if (!resLooks.ok) throw new Error(`No se pudieron leer los trajes (error ${resLooks.status})`);
+    lookbookDisponible = true;
+    looksAdmin = await resLooks.json();
+    renderLooksAdmin();
+    if (lookEditando === null) renderPiezas([]);              // al editar se conservan las prendas marcadas
+  } catch (err) {
+    console.error(err);
+    lista.innerHTML = `<p class="status error">${esc(err.message)}</p>`;
+  }
+}
+
+function etiquetaDeLook(l, i) {
+  const propia = l.etiqueta && l.etiqueta.trim();
+  if (propia) return propia;
+  if (!l.activo) return 'Sin etiqueta';
+  // igual que el catálogo: se numera solo entre los trajes visibles, en orden
+  return 'Look ' + String(looksAdmin.slice(0, i + 1).filter(x => x.activo).length).padStart(2, '0');
+}
+
+function renderLooksAdmin() {
+  const lista = document.getElementById('looksLista');
+  if (!looksAdmin.length) {
+    lista.innerHTML = '<p class="ayuda">Todavía no hay trajes. Agrega el primero con el formulario de arriba.</p>';
+    return;
+  }
+  lista.innerHTML = looksAdmin.map((l, i) => {
+    const n = Array.isArray(l.producto_ids) ? l.producto_ids.length : 0;
+    return `
+      <div class="look-item">
+        <div class="look-item__img"><img src="${esc(l.imagen_url)}" alt=""></div>
+        <div class="look-item__info">
+          <strong>${esc(l.titulo)}</strong>
+          <span>${esc(etiquetaDeLook(l, i))} · ${n} ${n === 1 ? 'prenda' : 'prendas'}</span>
+          <span class="${l.activo ? 'ok' : 'off'}">${l.activo ? 'Visible en el catálogo' : 'Oculto'}</span>
+        </div>
+        <div class="look-item__acciones">
+          <button type="button" class="secondary btn-look-subir" data-id="${l.id}" aria-label="Subir" ${i === 0 ? 'disabled' : ''}>↑ Subir</button>
+          <button type="button" class="secondary btn-look-bajar" data-id="${l.id}" aria-label="Bajar" ${i === looksAdmin.length - 1 ? 'disabled' : ''}>↓ Bajar</button>
+          <button type="button" class="secondary btn-look-activo" data-id="${l.id}">${l.activo ? 'Ocultar' : 'Mostrar'}</button>
+          <button type="button" class="secondary btn-look-editar" data-id="${l.id}">Editar</button>
+          <button type="button" class="danger btn-look-eliminar" data-id="${l.id}">Eliminar</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* Selector de prendas: lista con casillas y buscador. Lo marcado se conserva aunque se filtre. */
+function renderPiezas(marcadas) {
+  const cont = document.getElementById('lookPiezas');
+  if (!productosParaLook.length) {
+    cont.innerHTML = '<div class="piezas-vacio">Todavía no hay productos en el catálogo.</div>';
+    contarPiezas(); return;
+  }
+  cont.innerHTML = productosParaLook.map(p => `
+    <label class="pieza" data-texto="${esc((p.nom + ' ' + p.cat).toLowerCase())}">
+      <input type="checkbox" value="${esc(p.id)}" ${marcadas.includes(p.id) ? 'checked' : ''}>
+      <span>${esc(p.nom)}</span><small>${esc(p.cat)}</small>
+    </label>`).join('');
+  filtrarPiezas();
+  contarPiezas();
+}
+function filtrarPiezas() {
+  const q = document.getElementById('lookBuscarPieza').value.trim().toLowerCase();
+  document.querySelectorAll('#lookPiezas .pieza').forEach(el => { el.hidden = !!q && !el.dataset.texto.includes(q); });
+}
+function piezasMarcadas() {
+  return [...document.querySelectorAll('#lookPiezas input:checked')].map(i => i.value);
+}
+function contarPiezas() {
+  const n = piezasMarcadas().length;
+  document.getElementById('lookPiezasCuenta').textContent =
+    n ? `${n} ${n === 1 ? 'prenda elegida' : 'prendas elegidas'}` : 'Ninguna prenda elegida todavía.';
+}
+
+function reiniciarFormLook() {
+  lookEditando = null; lookFotoActual = null;
+  document.getElementById('formLook').reset();
+  document.getElementById('lookPreview').innerHTML = '';
+  document.getElementById('lookFormTitulo').textContent = 'Agregar traje de temporada';
+  document.getElementById('lookImagenLabel').textContent = 'Foto del traje *';
+  document.getElementById('lookGuardar').textContent = 'Agregar traje';
+  document.getElementById('lookCancelar').hidden = true;
+  renderPiezas([]);
+}
+
+function editarLook(id) {
+  const l = looksAdmin.find(x => String(x.id) === String(id));
+  if (!l) return;
+  lookEditando = l.id; lookFotoActual = { url: l.imagen_url, archivo: l.archivo };
+  document.getElementById('lookNombre').value = l.titulo || '';
+  document.getElementById('lookEtiqueta').value = l.etiqueta || '';
+  document.getElementById('lookActivo').checked = !!l.activo;
+  document.getElementById('lookImagen').value = '';
+  document.getElementById('lookPreview').innerHTML = `<img src="${esc(l.imagen_url)}" alt="">`;
+  document.getElementById('lookBuscarPieza').value = '';
+  renderPiezas(Array.isArray(l.producto_ids) ? l.producto_ids : []);
+  document.getElementById('lookFormTitulo').textContent = 'Editar traje: ' + l.titulo;
+  document.getElementById('lookImagenLabel').textContent = 'Cambiar foto (opcional: si la dejas vacía se conserva la actual)';
+  document.getElementById('lookGuardar').textContent = 'Guardar cambios';
+  document.getElementById('lookCancelar').hidden = false;
+  document.getElementById('lookFormTitulo').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function guardarOrdenLooks(nuevoOrden) {
+  // nuevoOrden: arreglo de filas en el orden deseado; se escribe la posición de cada una
+  const cambios = nuevoOrden.map((l, i) => ({ l, i })).filter(({ l, i }) => l.orden !== i);
+  const resultados = await Promise.all(cambios.map(({ l, i }) => fetch(`${SUPABASE_URL}/rest/v1/lookbook?id=eq.${l.id}`, {
+    method: 'PATCH', headers: cabecerasSupabase(), body: JSON.stringify({ orden: i })
+  })));
+  if (resultados.some(r => !r.ok)) throw new Error('No se pudo guardar el nuevo orden');
+}
+
+async function accionLook(e) {
+  const btn = e.target.closest('button[data-id]');
+  if (!btn || btn.disabled) return;
+  const id = btn.dataset.id;
+  const i = looksAdmin.findIndex(x => String(x.id) === String(id));
+  if (i < 0) return;
+  try {
+    if (btn.classList.contains('btn-look-editar')) return editarLook(id);
+
+    if (btn.classList.contains('btn-look-subir') || btn.classList.contains('btn-look-bajar')) {
+      const j = btn.classList.contains('btn-look-subir') ? i - 1 : i + 1;
+      if (j < 0 || j >= looksAdmin.length) return;
+      const copia = [...looksAdmin]; [copia[i], copia[j]] = [copia[j], copia[i]];
+      await guardarOrdenLooks(copia);
+      return cargarLooksAdmin();
+    }
+
+    if (btn.classList.contains('btn-look-activo')) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/lookbook?id=eq.${id}`, {
+        method: 'PATCH', headers: cabecerasSupabase(), body: JSON.stringify({ activo: !looksAdmin[i].activo })
+      });
+      if (!res.ok) throw new Error(`No se pudo cambiar la visibilidad (error ${res.status})`);
+      toast(looksAdmin[i].activo ? 'Traje oculto ✓' : 'Traje visible ✓');
+      return cargarLooksAdmin();
+    }
+
+    if (btn.classList.contains('btn-look-eliminar')) {
+      if (!confirm(`¿Eliminar el traje «${looksAdmin[i].titulo}»?\n\nSe quita del catálogo y se borra su foto de GitHub.`)) return;
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/lookbook?id=eq.${id}`, { method: 'DELETE', headers: cabecerasSupabase() });
+      if (!res.ok) throw new Error(`No se pudo eliminar el traje (error ${res.status})`);
+      const borrada = await borrarArchivoGithub(looksAdmin[i].archivo);
+      if (lookEditando !== null && String(lookEditando) === String(id)) reiniciarFormLook();
+      toast(borrada ? 'Traje eliminado ✓' : 'Traje eliminado (su foto no se pudo borrar de GitHub)');
+      return cargarLooksAdmin();
+    }
+  } catch (err) {
+    console.error(err);
+    toast(err.message, 'error');
+  }
+}
+
+async function guardarLook(e) {
+  e.preventDefault();
+  if (!lookbookDisponible) return toast(MSJ_SIN_TABLA, 'error');
+
+  const titulo = document.getElementById('lookNombre').value.trim();
+  const etiqueta = document.getElementById('lookEtiqueta').value.trim() || null;
+  const activo = document.getElementById('lookActivo').checked;
+  const archivoImg = document.getElementById('lookImagen').files[0];
+  if (!titulo) return toast('Escribe el título del traje', 'error');
+  if (!lookEditando && !archivoImg) return toast('Selecciona la foto del traje', 'error');
+
+  const boton = document.getElementById('lookGuardar'), textoBoton = boton.textContent;
+  boton.disabled = true; boton.textContent = 'Guardando…';
+  let archivoNuevo = null;
+  try {
+    let imagen_url = lookFotoActual?.url, archivo = lookFotoActual?.archivo || null, archivoViejo = null;
+    if (archivoImg) {
+      archivoNuevo = `look-${generarId(titulo)}-${Date.now().toString(36)}.jpg`;   // nombre único: no pisa nada
+      await subirImagenReemplazando(archivoNuevo, await leerArchivoBase64(archivoImg), `Add look image: ${archivoNuevo}`);
+      archivoViejo = lookEditando ? archivo : null;
+      imagen_url = urlRaw(archivoNuevo); archivo = archivoNuevo;
+    }
+    const cuerpo = { titulo, etiqueta, imagen_url, archivo, producto_ids: piezasMarcadas(), activo };
+
+    let res;
+    if (lookEditando) {
+      res = await fetch(`${SUPABASE_URL}/rest/v1/lookbook?id=eq.${lookEditando}`, {
+        method: 'PATCH', headers: cabecerasSupabase(), body: JSON.stringify(cuerpo)
+      });
+    } else {
+      cuerpo.orden = looksAdmin.reduce((m, l) => Math.max(m, Number(l.orden) || 0), 0) + 1;
+      res = await fetch(`${SUPABASE_URL}/rest/v1/lookbook`, {
+        method: 'POST', headers: { ...cabecerasSupabase(), 'Prefer': 'return=minimal' }, body: JSON.stringify(cuerpo)
+      });
+    }
+    if (!res.ok) {
+      const detalle = await res.text();
+      console.error('lookbook:', res.status, detalle);
+      throw new Error(res.status === 404 ? MSJ_SIN_TABLA : `No se guardó el traje (error ${res.status})`);
+    }
+    archivoNuevo = null;                                       // todo bien: la foto nueva ya está en uso
+    if (archivoViejo) await borrarArchivoGithub(archivoViejo); // se quita la foto anterior para no dejarla huérfana
+
+    const editado = !!lookEditando;
+    reiniciarFormLook();
+    toast(editado ? 'Cambios guardados ✓' : 'Traje agregado ✓');
+    await cargarLooksAdmin();
+  } catch (err) {
+    console.error(err);
+    if (archivoNuevo) await borrarArchivoGithub(archivoNuevo);  // la foto se subió pero el traje no se guardó
+    toast(err.message, 'error');
+  } finally {
+    boton.disabled = false;
+    if (boton.textContent === 'Guardando…') boton.textContent = textoBoton;
+  }
+}
+
+document.getElementById('formLook').addEventListener('submit', guardarLook);
+document.getElementById('looksLista').addEventListener('click', accionLook);
+document.getElementById('lookCancelar').addEventListener('click', reiniciarFormLook);
+document.getElementById('lookBuscarPieza').addEventListener('input', filtrarPiezas);
+document.getElementById('lookPiezas').addEventListener('change', contarPiezas);
+document.getElementById('lookImagen').addEventListener('change', e => {
+  const f = e.target.files[0];
+  const prev = document.getElementById('lookPreview');
+  if (f) { const img = document.createElement('img'); img.alt = ''; img.src = URL.createObjectURL(f); prev.replaceChildren(img); }
+  else if (lookEditando && lookFotoActual) prev.innerHTML = `<img src="${esc(lookFotoActual.url)}" alt="">`;
+  else prev.replaceChildren();
+});
+
+/* ── Productos MÚLTIPLES: varias prendas en una misma foto ─────────────────
+   Van en la tabla productos con tipo = 'multiple'. La foto se guarda en
+   productos.imagen_url y cada prenda (nombre, descripción, precio, tallas y
+   color opcional) en productos.piezas (jsonb). No llevan referencias ni foto
+   individual. */
+const MIN_PIEZAS = 2, MAX_PIEZAS = 6;
+const MSJ_SIN_COLUMNAS = "La base de datos todavía no tiene (o no reconoce) las columnas para los productos «Múltiples». Corre el SQL de «Múltiples» en Supabase y, si ya lo hiciste, ejecuta: notify pgrst, 'reload schema';";
+let tipoProducto = 'individual';
+let multEditando = null;         // id del producto múltiple que se está editando
+let multFotoActual = null;       // { url, archivo } de la foto actual
+let piezaSeq = 0;
+
+function activarPestana(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  const btn = [...document.querySelectorAll('.tab-btn')].find(b => (b.getAttribute('onclick') || '').includes(`'${tab}'`));
+  if (btn) btn.classList.add('active');
+}
+
+function opcionesColor(seleccion, hexSel) {
+  const lista = coloresPredefinidos.map(c => ({ nombre: c.nombre, hex: c.hex }));
+  if (seleccion && !lista.some(c => c.nombre === seleccion)) lista.push({ nombre: seleccion, hex: hexSel || '#cccccc' });
+  return '<option value="">(sin color)</option>' + lista.map(c =>
+    `<option value="${esc(c.nombre)}" data-hex="${esc(c.hex)}" ${c.nombre === seleccion ? 'selected' : ''}>${esc(c.nombre)}</option>`).join('');
+}
+
+function actualizarPiezas() {
+  const piezas = [...document.querySelectorAll('#piezasContenedor .pieza-form')];
+  piezas.forEach((el, i) => {
+    el.querySelector('.pz-titulo').textContent = 'Prenda ' + (i + 1);
+    el.querySelector('.btn-quitar-pieza').disabled = piezas.length <= MIN_PIEZAS;
+  });
+  document.getElementById('btnAgregarPieza').hidden = piezas.length >= MAX_PIEZAS;
+}
+
+function agregarPiezaForm(d = {}) {
+  const cont = document.getElementById('piezasContenedor');
+  if (cont.children.length >= MAX_PIEZAS) return;
+  const n = ++piezaSeq;
+  const el = document.createElement('div');
+  el.className = 'pieza-form';
+  el.dataset.pid = d.id || ('p' + Date.now().toString(36) + n);
+  el.innerHTML = `
+    <div class="pieza-form__cab"><strong class="pz-titulo">Prenda</strong><button type="button" class="danger btn-quitar-pieza">Quitar</button></div>
+    <div class="grid-2">
+      <div class="form-group"><label>Nombre de la prenda *</label>
+        <input type="text" class="pz-nombre" placeholder="ej: Blusa Elara" maxlength="60" autocomplete="off"></div>
+      <div class="form-group"><label>Precio (COP) *</label>
+        <input type="number" class="pz-precio" placeholder="ej: 120000" min="0" step="1000"></div>
+    </div>
+    <div class="form-group"><label>Descripción corta (opcional)</label>
+      <input type="text" class="pz-desc" placeholder="ej: Manga larga con escote en V" maxlength="120" autocomplete="off"></div>
+    <div class="form-group">
+      <label>Color (opcional: sirve para buscar y filtrar)</label>
+      <div class="pz-color-btns" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div>
+      <input type="text" class="pz-color-input" placeholder="O escribe un color nuevo (ej: Rosado empolvado)" style="margin-top:8px;">
+      <input type="hidden" class="pz-color-val" value="">
+      <input type="hidden" class="pz-hex-val" value="">
+    </div>
+    <div class="form-group"><label>Tipo de talla *</label><div class="tipo-talla" id="pzTipo_${n}"></div></div>
+    <div class="form-group"><label>Tallas disponibles *</label><div class="tallas-group" id="pzTallas_${n}"></div></div>`;
+  cont.appendChild(el);
+  el.querySelector('.pz-nombre').value = d.nombre || '';
+  el.querySelector('.pz-precio').value = d.precio ?? '';
+  el.querySelector('.pz-desc').value = d.desc || d.descripcion || '';
+  /* selector visual de colores para la pieza */
+  const colorBtns = el.querySelector('.pz-color-btns');
+  const colorInput = el.querySelector('.pz-color-input');
+  const colorVal   = el.querySelector('.pz-color-val');
+  const hexVal     = el.querySelector('.pz-hex-val');
+  const renderColorBtns = () => {
+    colorBtns.replaceChildren();
+    coloresPredefinidos.forEach(c => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'color-btn';
+      b.style.background = c.hex; b.title = c.nombre;
+      b.setAttribute('aria-pressed', String(colorVal.value === c.nombre));
+      b.addEventListener('click', () => {
+        colorVal.value = c.nombre; hexVal.value = c.hex; colorInput.value = '';
+        renderColorBtns();
+      });
+      colorBtns.appendChild(b);
+    });
+    // botón para deseleccionar
+    const none = document.createElement('button'); none.type = 'button'; none.className = 'color-btn color-btn--none'; none.title = 'Sin color';
+    none.textContent = '×';
+    const noneActive = !colorVal.value && !colorInput.value;
+    none.setAttribute('aria-pressed', String(noneActive));
+    if (noneActive) none.classList.add('selected'); else none.classList.remove('selected');
+    none.addEventListener('click', () => { colorVal.value = ''; hexVal.value = ''; colorInput.value = ''; renderColorBtns(); });
+    colorBtns.insertBefore(none, colorBtns.firstChild);
+  };
+  colorInput.addEventListener('input', () => { colorVal.value = ''; hexVal.value = ''; renderColorBtns(); });
+  if (d.color && !coloresPredefinidos.some(c => c.nombre === d.color)) {
+    colorInput.value = d.color;            // color personalizado que ya tenía la pieza
+  } else {
+    colorVal.value = d.color || ''; hexVal.value = d.hex || '';
+  }
+  renderColorBtns();
+  const tallas = Array.isArray(d.tallas) ? d.tallas : [];
+  montarTallas('pzTipo_' + n, 'pzTallas_' + n, tallas.length ? tipoDeTallas(tallas) : 'normales',
+               tallas.length ? tallas : TALLAS_NORMALES_POR_DEFECTO);
+  actualizarPiezas();
+}
+
+function reiniciarPiezas(lista) {
+  document.getElementById('piezasContenedor').replaceChildren();
+  (lista && lista.length ? lista : Array.from({ length: MIN_PIEZAS }, () => ({}))).forEach(d => agregarPiezaForm(d));
+}
+
+function leerPiezas() {
+  const els = [...document.querySelectorAll('#piezasContenedor .pieza-form')];
+  const piezas = [];
+  for (let i = 0; i < els.length; i++) {
+    const el = els[i], num = i + 1;
+    const nombre = el.querySelector('.pz-nombre').value.trim();
+    const precio = parseInt(el.querySelector('.pz-precio').value, 10);
+    const tallas = [...el.querySelectorAll('.tallas-group input:checked')].map(x => x.value);
+    if (!nombre) return { error: `Prenda ${num}: escribe el nombre` };
+    if (!(precio > 0)) return { error: `Prenda ${num}: escribe un precio válido` };
+    if (!tallas.length) return { error: `Prenda ${num}: elige al menos una talla` };
+    const colorVel = el.querySelector('.pz-color-val').value.trim();
+    const colorInp = el.querySelector('.pz-color-input').value.trim();
+    const color = colorVel || colorInp || null;
+    const hex = colorVel ? (el.querySelector('.pz-hex-val').value || null) : null;
+    piezas.push({ id: el.dataset.pid, nombre, desc: el.querySelector('.pz-desc').value.trim(), precio, tallas, color, hex });
+  }
+  if (piezas.length < MIN_PIEZAS) return { error: 'Agrega al menos 2 prendas' };
+  return { piezas };
+}
+
+/* Cambia el formulario entre «Individual» y «Múltiples» */
+function aplicarTipoProducto(tipo) {
+  tipoProducto = tipo;
+  const multi = tipo === 'multiple';
+  const ind = document.getElementById('bloqueIndividual');
+  ind.hidden = multi; ind.disabled = multi;                  // deshabilitado: sus campos «requeridos» no estorban
+  document.getElementById('bloqueMultiple').hidden = !multi;
+  document.getElementById('desc_corta').required = !multi;
+  document.getElementById('desc').required = !multi;
+  document.getElementById('imagen').required = !(multi && multEditando);
+  document.getElementById('lblDescCorta').textContent = multi ? 'Descripción corta del conjunto (opcional)' : 'Descripción Corta (en grid) *';
+  document.getElementById('lblDesc').textContent = multi ? 'Descripción larga (opcional)' : 'Descripción Larga (VER MAS) *';
+  document.getElementById('lblImagen').textContent = multi
+    ? (multEditando ? 'Cambiar foto (opcional: si la dejas vacía se conserva la actual)' : 'Foto con todas las prendas *')
+    : 'Imagen del Producto *';
+  document.getElementById('nombre').placeholder = multi ? 'ej: Conjunto Elara' : 'ej: Body Serafina';
+  document.getElementById('desc_corta').placeholder = multi ? 'ej: Blusa y pantalón a juego' : 'ej: Manga larga con escote en V y nudo frontal';
+  document.getElementById('tipoProductoAyuda').textContent = multi
+    ? 'Una sola foto con 2 o más prendas. Cada prenda lleva su propio nombre, precio y tallas, y el cliente las ve y las agrega al bolso por separado.'
+    : 'Una prenda con uno o varios colores, cada color con su foto.';
+  document.querySelector('#tab-crear h2').textContent = multi
+    ? (multEditando ? 'Editar producto múltiple' : 'Crear producto múltiple') : 'Crear Nuevo Producto';
+  document.getElementById('btnCrear').textContent = multi
+    ? (multEditando ? 'Guardar cambios' : 'Crear producto múltiple') : 'Crear Producto';
+  if (multi && !document.querySelector('#piezasContenedor .pieza-form')) reiniciarPiezas();
+}
+
+function reiniciarFormMultiple(seguirEnMultiple = true) {
+  multEditando = null; multFotoActual = null;
+  document.querySelectorAll('input[name="tipoProducto"]').forEach(r => { r.disabled = false; });
+  document.getElementById('formCrearProducto').reset();          // el radio vuelve a «individual»
+  document.getElementById('previewImagen').innerHTML = '';
+  document.getElementById('statusCrear').innerHTML = '';
+  document.getElementById('btnCancelarMultiple').hidden = true;
+  document.querySelector(`input[name="tipoProducto"][value="${seguirEnMultiple ? 'multiple' : 'individual'}"]`).checked = true;
+  reiniciarPiezas();
+  aplicarTipoProducto(seguirEnMultiple ? 'multiple' : 'individual');
+}
+
+async function guardarMultiple() {
+  const nombre = document.getElementById('nombre').value.trim();
+  const categoria = document.getElementById('categoria').value;
+  const desc_corta = document.getElementById('desc_corta').value.trim();
+  const desc = document.getElementById('desc').value.trim();
+  const imagen = document.getElementById('imagen').files[0];
+  if (!nombre) return toast('Escribe el nombre del producto', 'error');
+  if (!categoria) return toast('Elige una categoría', 'error');
+  if (!multEditando && !imagen) return toast('Selecciona la foto con todas las prendas', 'error');
+  const { piezas, error } = leerPiezas();
+  if (error) return toast(error, 'error');
+
+  const boton = document.getElementById('btnCrear'), textoBoton = boton.textContent;
+  boton.disabled = true; boton.textContent = 'Guardando…';
+  let archivoNuevo = null;
+  try {
+    // 1) comprobar que la base ya tenga las columnas nuevas, ANTES de subir nada a GitHub
+    const chk = await fetch(`${SUPABASE_URL}/rest/v1/productos?select=tipo,piezas,imagen_url,archivo&limit=1`, { headers: cabecerasSupabase() });
+    if (!chk.ok) {
+      const d = await chk.text();
+      console.error('comprobar columnas:', chk.status, d);
+      throw new Error(/tipo|piezas|imagen_url|archivo|column/i.test(d) ? MSJ_SIN_COLUMNAS : `No se pudo comprobar la base de datos (error ${chk.status})`);
+    }
+
+    // 2) la foto (con nombre único: nunca pisa otro archivo)
+    const id = multEditando || generarId(nombre);
+    let imagen_url = multFotoActual?.url || null, archivo = multFotoActual?.archivo || null, archivoViejo = null;
+    if (imagen) {
+      archivoNuevo = `${id}-conjunto-${Date.now().toString(36)}.jpg`;
+      await subirImagenReemplazando(archivoNuevo, await leerArchivoBase64(imagen), `Add set image: ${archivoNuevo}`);
+      archivoViejo = multEditando ? archivo : null;
+      imagen_url = urlRaw(archivoNuevo); archivo = archivoNuevo;
+    }
+
+    // 3) el producto, en un solo paso
+    const cuerpo = { cat: categoria, nom: nombre, desc_corta, desc, tipo: 'multiple', piezas, imagen_url, archivo };
+    const res = multEditando
+      ? await fetch(`${SUPABASE_URL}/rest/v1/productos?id=eq.${encodeURIComponent(id)}`, { method: 'PATCH', headers: cabecerasSupabase(), body: JSON.stringify(cuerpo) })
+      : await fetch(`${SUPABASE_URL}/rest/v1/productos`, { method: 'POST', headers: { ...cabecerasSupabase(), 'Prefer': 'return=minimal' }, body: JSON.stringify({ id, ...cuerpo }) });
+    if (!res.ok) {
+      const d = await res.text();
+      console.error('guardar múltiple:', res.status, d);
+      if (res.status === 409) throw new Error(`Ya existe un producto llamado «${nombre}». Usa otro nombre.`);
+      if (/PGRST204|schema cache|column/i.test(d)) throw new Error(MSJ_SIN_COLUMNAS);
+      throw new Error(`No se guardó el producto (error ${res.status})`);
+    }
+    archivoNuevo = null;                                       // la foto nueva ya está en uso
+    if (archivoViejo) await borrarArchivoGithub(archivoViejo); // se quita la foto anterior para no dejarla huérfana
+
+    const editado = !!multEditando;
+    reiniciarFormMultiple();
+    toast(editado ? 'Cambios guardados ✓' : 'Producto múltiple creado ✓');
+    cargarProductos();
+  } catch (err) {
+    console.error(err);
+    if (archivoNuevo) await borrarArchivoGithub(archivoNuevo);   // se subió la foto pero el producto no se guardó
+    toast(err.message, 'error');
+  } finally {
+    boton.disabled = false;
+    if (boton.textContent === 'Guardando…') boton.textContent = textoBoton;
+  }
+}
+
+function editarMultiple(id) {
+  const p = productosTotal.find(x => x.id === id);
+  if (!p) return;
+  multEditando = p.id; multFotoActual = { url: p.imagen_url, archivo: p.archivo || null };
+  activarPestana('crear');
+  document.querySelector('input[name="tipoProducto"][value="multiple"]').checked = true;
+  document.querySelectorAll('input[name="tipoProducto"]').forEach(r => { r.disabled = true; });   // no se convierte un producto de tipo
+  document.getElementById('nombre').value = p.nom || '';
+  const sel = document.getElementById('categoria');
+  if (![...sel.options].some(o => o.value === p.cat)) sel.add(new Option(p.cat, p.cat));
+  sel.value = p.cat;
+  document.getElementById('desc_corta').value = p.desc_corta || '';
+  document.getElementById('desc').value = p.desc || '';
+  document.getElementById('imagen').value = '';
+  document.getElementById('previewImagen').innerHTML = p.imagen_url ? `<img src="${esc(p.imagen_url)}" alt="">` : '';
+  reiniciarPiezas(Array.isArray(p.piezas) ? p.piezas : []);
+  aplicarTipoProducto('multiple');
+  document.getElementById('btnCancelarMultiple').hidden = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function eliminarMultiple(id) {
+  const p = productosTotal.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm(`¿Eliminar «${p.nom}»?\n\nSe quita del catálogo y se borra su foto de GitHub.`)) return;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/productos?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE', headers: cabecerasSupabase() });
+    if (!res.ok) throw new Error(`No se pudo eliminar (error ${res.status})`);
+    const borrada = await borrarArchivoGithub(p.archivo);
+    if (multEditando === id) reiniciarFormMultiple();
+    cargarProductos();
+    toast(borrada ? 'Producto eliminado ✓' : 'Producto eliminado (su foto no se pudo borrar de GitHub)');
+  } catch (err) {
+    console.error(err);
+    toast(err.message, 'error');
+  }
+}
+
+function htmlProductoMultiple(p) {
+  const piezas = Array.isArray(p.piezas) ? p.piezas : [];
+  return `
+    <div class="producto-item">
+      <div class="producto-header">
+        <div>
+          <h3>${esc(p.nom)}</h3>
+          <small>${esc(p.cat)} · Múltiples (${piezas.length} prendas)</small>
+        </div>
+        <div>
+          <button type="button" class="secondary btn-editar-multiple" style="margin-right: 10px;" data-id="${esc(p.id)}">Editar</button>
+          <button type="button" class="danger btn-eliminar-multiple" data-id="${esc(p.id)}">Eliminar</button>
+        </div>
+      </div>
+      <div class="multi-item">
+        <div class="img-preview multi-foto">${p.imagen_url ? `<img src="${esc(p.imagen_url)}" alt="">` : 'Sin imagen'}</div>
+        <div class="multi-piezas">
+          ${piezas.map(z => `
+            <div class="multi-pieza">
+              <span><strong>${esc(z.nombre)}</strong>${z.color ? ' · ' + esc(z.color) : ''}</span>
+              <span>$${Number(z.precio).toLocaleString('es-CO')}</span>
+              <span>${esc(etiquetaTallas(z.tallas))}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+      ${p.referencias && p.referencias.length ? p.referencias.map(r => `
+        <div class="referencia-item">
+          <div class="img-preview">${r.imagen_url ? `<img src="${esc(r.imagen_url)}" alt="${esc(r.color)}">` : 'Sin imagen'}</div>
+          <div style="text-align:center;"><div style="width:40px;height:40px;background:${r.hex};border-radius:4px;margin:0 auto;"></div></div>
+          <div class="referencia-info">
+            <span><strong>${esc(r.color)}</strong></span>
+            ${Array.isArray(r.piezas_precios) && r.piezas_precios.length
+              ? r.piezas_precios.map(z => `<span style="font-size:12px;color:#555;">• ${esc(z.nombre)}: $${Number(z.precio).toLocaleString('es-CO')}</span>`).join('')
+              : `<span>$${r.precio.toLocaleString('es-CO')}</span>`}
+            <span>${etiquetaTallas(r.tallas)}</span>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button type="button" class="secondary btn-editar-referencia" style="padding:6px 12px;font-size:12px;"
+              data-producto-id="${esc(p.id)}" data-ref-id="${esc(r.id)}" data-color="${esc(r.color)}" data-precio="${r.precio}" data-tallas="${esc(JSON.stringify(r.tallas))}" data-imagen="${esc(r.imagen_url || '')}">Editar</button>
+            <button type="button" class="danger btn-eliminar-referencia" style="padding:6px 12px;font-size:12px;"
+              data-ref-id="${esc(r.id)}" data-archivo="${esc(r.archivo || '')}">Eliminar</button>
+          </div>
+        </div>
+        ${extrasDe(r).length ? `<div class="fotos-extra">${extrasDe(r).map((f,k) => `<div class="foto-extra"><img src="${f.url||f}" alt=""><span>${f.nombre||(p.nom+' - '+r.color+' '+(k+1))}</span><button type="button" class="danger btn-eliminar-foto-extra" data-ref-id="${esc(r.id)}" data-archivo="${esc(f.archivo||'')}" data-url="${esc(f.url||f)}">✕</button></div>`).join('')}</div>` : ''}
+      `).join('') : ''}
+      <button type="button" class="secondary" style="width:100%;margin-top:15px;"
+        onclick="abrirNuevaReferencia('${esc(p.id)}', ${piezas.length > 0 ? piezas[0].precio : 0})">+ Agregar Color del conjunto</button>
+    </div>`;
+}
+
+document.querySelectorAll('input[name="tipoProducto"]').forEach(r => r.addEventListener('change', () => aplicarTipoProducto(r.value)));
+document.getElementById('btnAgregarPieza').addEventListener('click', () => agregarPiezaForm());
+document.getElementById('btnCancelarMultiple').addEventListener('click', () => reiniciarFormMultiple());
+document.addEventListener('click', e => {
+  const b = e.target.closest('.btn-editar-multiple, .btn-eliminar-multiple, .btn-quitar-pieza');
+  if (!b) return;
+  if (b.classList.contains('btn-editar-multiple')) editarMultiple(b.dataset.id);
+  else if (b.classList.contains('btn-eliminar-multiple')) eliminarMultiple(b.dataset.id);
+  else if (!b.disabled) { b.closest('.pieza-form').remove(); actualizarPiezas(); }
+});
+aplicarTipoProducto('individual');
+
+/* ── Comentarios del catálogo ─────────────────────────────────────────────
+   Tabla comentarios: texto, autor (opcional), orden, activo, origen y nuevo.
+   Los que dejan los visitantes llegan con nuevo = true (y ocultos, salvo que el
+   catálogo esté en modo «publicar al instante») y quedan en «Por revisar» hasta
+   que los publicas, los dejas ocultos o los borras. */
+const COM_ORDEN_FINAL = 100000;      // los de visitantes se guardan con este orden: van al final
+let comentariosAdmin = [];
+let comEditando = null;
+let comDisponible = true;
+const MSJ_SIN_TABLA_COM = 'Falta crear la tabla «comentarios» en Supabase. Corre el SQL de «Comentarios» y recarga.';
+const fechaCom = iso => { try { return new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso)); } catch { return ''; } };
+
+/* El numerito rojo de la pestaña: cuántos comentarios esperan tu revisión */
+function ponerInsigniaCom(n) {
+  const el = document.getElementById('insigniaCom');
+  el.textContent = String(n); el.hidden = !(n > 0);
+}
+async function actualizarInsigniaComentarios() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/comentarios?select=id&nuevo=eq.true`, { headers: cabecerasSupabase() });
+    if (!res.ok) return ponerInsigniaCom(0);                 // la tabla o la columna todavía no existen: no se muestra nada
+    ponerInsigniaCom((await res.json()).length);
+  } catch { ponerInsigniaCom(0); }
+}
+
+async function cargarComentariosAdmin() {
+  const lista = document.getElementById('comLista');
+  lista.innerHTML = '<p class="ayuda">Cargando…</p>';
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/comentarios?order=orden,id`, { headers: cabecerasSupabase() });
+    if (res.status === 404) { comDisponible = false; lista.innerHTML = `<p class="status error">${MSJ_SIN_TABLA_COM}</p>`; return; }
+    if (!res.ok) throw new Error(`No se pudieron leer los comentarios (error ${res.status})`);
+    comDisponible = true;
+    comentariosAdmin = await res.json();
+    renderComentariosAdmin();
+  } catch (err) {
+    console.error(err);
+    lista.innerHTML = `<p class="status error">${esc(err.message)}</p>`;
+  }
+}
+
+function htmlItemNuevoCom(c) {
+  const visible = !!c.activo;
+  const fecha = c.created_at ? fechaCom(c.created_at) : '';
+  return `
+    <div class="com-item com-item--nuevo">
+      <div>
+        <p class="com-item__txt">${esc(c.texto)}</p>
+        <span class="com-item__meta">${c.autor ? esc(c.autor) + ' · ' : 'Sin nombre · '}<span class="nuevo-tag">Nuevo</span>${fecha ? ' · ' + esc(fecha) : ''} · <span class="${visible ? 'ok' : 'off'}">${visible ? 'Ya se ve en la tienda' : 'Oculto hasta que lo publiques'}</span></span>
+      </div>
+      <div class="com-item__acciones">
+        ${visible
+          ? `<button type="button" class="secondary btn-com-visto" data-id="${c.id}">Está bien, dejarlo</button>
+             <button type="button" class="secondary btn-com-ocultar-nuevo" data-id="${c.id}">Ocultar</button>`
+          : `<button type="button" class="btn-com-publicar" data-id="${c.id}">Publicar</button>
+             <button type="button" class="secondary btn-com-visto" data-id="${c.id}">Dejar oculto</button>`}
+        <button type="button" class="secondary btn-com-editar" data-id="${c.id}">Editar</button>
+        <button type="button" class="danger btn-com-eliminar" data-id="${c.id}">Eliminar</button>
+      </div>
+    </div>`;
+}
+
+function renderComentariosAdmin() {
+  const lista = document.getElementById('comLista');
+  const nuevos = comentariosAdmin.filter(c => c.nuevo);
+  const resto = comentariosAdmin.filter(c => !c.nuevo);
+  ponerInsigniaCom(nuevos.length);
+  if (!comentariosAdmin.length) { lista.innerHTML = '<p class="ayuda">Todavía no hay comentarios. Mientras no haya ninguno visible, solo se ve el formulario para que los visitantes dejen el suyo.</p>'; return; }
+  let html = '';
+  if (nuevos.length) {
+    html += `<div class="com-nuevos"><h3>Por revisar (${nuevos.length})</h3>
+      <p class="ayuda">Los dejaron visitantes desde el catálogo. Decide qué hacer con cada uno.</p>${nuevos.map(htmlItemNuevoCom).join('')}</div>`;
+  }
+  if (resto.length) {
+    if (nuevos.length) html += '<h3 class="com-sub">Publicados y ocultos</h3>';
+    html += resto.map((c, i) => `
+    <div class="com-item">
+      <div>
+        <p class="com-item__txt">${esc(c.texto)}</p>
+        <span class="com-item__meta">${c.autor ? esc(c.autor) + ' · ' : ''}<span class="${c.activo ? 'ok' : 'off'}">${c.activo ? 'Visible en el catálogo' : 'Oculto'}</span></span>
+      </div>
+      <div class="com-item__acciones">
+        <button type="button" class="secondary btn-com-subir" data-id="${c.id}" ${i === 0 ? 'disabled' : ''}>↑ Subir</button>
+        <button type="button" class="secondary btn-com-bajar" data-id="${c.id}" ${i === resto.length - 1 ? 'disabled' : ''}>↓ Bajar</button>
+        <button type="button" class="secondary btn-com-activo" data-id="${c.id}">${c.activo ? 'Ocultar' : 'Mostrar'}</button>
+        <button type="button" class="secondary btn-com-editar" data-id="${c.id}">Editar</button>
+        <button type="button" class="danger btn-com-eliminar" data-id="${c.id}">Eliminar</button>
+      </div>
+    </div>`).join('');
+  }
+  lista.innerHTML = html;
+}
+
+function actualizarCuentaCom() {
+  document.getElementById('comCuenta').textContent = `${document.getElementById('comTexto').value.length} / 240`;
+}
+
+function reiniciarFormCom() {
+  comEditando = null;
+  document.getElementById('formComentario').reset();
+  document.getElementById('comFormTitulo').textContent = 'Agregar comentario';
+  document.getElementById('comGuardar').textContent = 'Agregar comentario';
+  document.getElementById('comCancelar').hidden = true;
+  actualizarCuentaCom();
+}
+
+function editarCom(id) {
+  const c = comentariosAdmin.find(x => String(x.id) === String(id));
+  if (!c) return;
+  comEditando = c.id;
+  document.getElementById('comTexto').value = c.texto || '';
+  document.getElementById('comAutor').value = c.autor || '';
+  document.getElementById('comActivo').checked = !!c.activo;
+  document.getElementById('comFormTitulo').textContent = 'Editar comentario';
+  document.getElementById('comGuardar').textContent = 'Guardar cambios';
+  document.getElementById('comCancelar').hidden = false;
+  actualizarCuentaCom();
+  document.getElementById('comFormTitulo').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function cambiarCom(id, cambios, aviso) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/comentarios?id=eq.${id}`, { method: 'PATCH', headers: cabecerasSupabase(), body: JSON.stringify(cambios) });
+  if (!res.ok) throw new Error(`No se pudo guardar el cambio (error ${res.status})`);
+  toast(aviso);
+  return cargarComentariosAdmin();
+}
+
+async function accionCom(e) {
+  const btn = e.target.closest('button[data-id]');
+  if (!btn || btn.disabled) return;
+  const id = btn.dataset.id, c = comentariosAdmin.find(x => String(x.id) === String(id));
+  if (!c) return;
+  try {
+    if (btn.classList.contains('btn-com-editar')) return editarCom(id);
+    if (btn.classList.contains('btn-com-publicar')) return cambiarCom(id, { activo: true, nuevo: false }, 'Comentario publicado ✓');
+    if (btn.classList.contains('btn-com-visto')) return cambiarCom(id, { nuevo: false }, c.activo ? 'Listo, se queda visible ✓' : 'Listo, se queda oculto ✓');
+    if (btn.classList.contains('btn-com-ocultar-nuevo')) return cambiarCom(id, { activo: false, nuevo: false }, 'Comentario oculto ✓');
+    if (btn.classList.contains('btn-com-activo')) return cambiarCom(id, { activo: !c.activo }, c.activo ? 'Comentario oculto ✓' : 'Comentario visible ✓');
+
+    if (btn.classList.contains('btn-com-subir') || btn.classList.contains('btn-com-bajar')) {
+      const resto = comentariosAdmin.filter(x => !x.nuevo);        // el orden solo se mueve entre los ya revisados
+      const i = resto.findIndex(x => String(x.id) === String(id));
+      const j = btn.classList.contains('btn-com-subir') ? i - 1 : i + 1;
+      if (i < 0 || j < 0 || j >= resto.length) return;
+      const copia = [...resto]; [copia[i], copia[j]] = [copia[j], copia[i]];
+      const cambios = copia.map((x, k) => ({ x, k })).filter(({ x, k }) => x.orden !== k);
+      const rs = await Promise.all(cambios.map(({ x, k }) => fetch(`${SUPABASE_URL}/rest/v1/comentarios?id=eq.${x.id}`, {
+        method: 'PATCH', headers: cabecerasSupabase(), body: JSON.stringify({ orden: k }) })));
+      if (rs.some(r => !r.ok)) throw new Error('No se pudo guardar el nuevo orden');
+      return cargarComentariosAdmin();
+    }
+    if (btn.classList.contains('btn-com-eliminar')) {
+      if (!confirm('¿Eliminar este comentario?\n\n«' + c.texto.slice(0, 80) + '»')) return;
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/comentarios?id=eq.${id}`, { method: 'DELETE', headers: cabecerasSupabase() });
+      if (!res.ok) throw new Error(`No se pudo eliminar (error ${res.status})`);
+      if (comEditando !== null && String(comEditando) === String(id)) reiniciarFormCom();
+      toast('Comentario eliminado ✓');
+      return cargarComentariosAdmin();
+    }
+  } catch (err) { console.error(err); toast(err.message, 'error'); }
+}
+
+async function guardarCom(e) {
+  e.preventDefault();
+  if (!comDisponible) return toast(MSJ_SIN_TABLA_COM, 'error');
+  const texto = document.getElementById('comTexto').value.trim();          // solo se quitan espacios de los extremos
+  const autor = document.getElementById('comAutor').value.trim() || null;
+  const activo = document.getElementById('comActivo').checked;
+  if (!texto) return toast('Escribe el comentario', 'error');
+  const boton = document.getElementById('comGuardar'), textoBoton = boton.textContent;
+  boton.disabled = true; boton.textContent = 'Guardando…';
+  try {
+    const cuerpo = { texto, autor, activo };
+    let res;
+    if (comEditando) {
+      res = await fetch(`${SUPABASE_URL}/rest/v1/comentarios?id=eq.${comEditando}`, { method: 'PATCH', headers: cabecerasSupabase(), body: JSON.stringify(cuerpo) });
+    } else {
+      // el orden de los que agregas tú sigue a los tuyos (los de visitantes, con orden muy alto, no cuentan)
+      cuerpo.orden = comentariosAdmin.filter(c => (Number(c.orden) || 0) < COM_ORDEN_FINAL).reduce((m, c) => Math.max(m, Number(c.orden) || 0), 0) + 1;
+      res = await fetch(`${SUPABASE_URL}/rest/v1/comentarios`, { method: 'POST', headers: { ...cabecerasSupabase(), 'Prefer': 'return=minimal' }, body: JSON.stringify(cuerpo) });
+    }
+    if (!res.ok) {
+      console.error('comentarios:', res.status, await res.text());
+      throw new Error(res.status === 404 ? MSJ_SIN_TABLA_COM : `No se guardó el comentario (error ${res.status})`);
+    }
+    const editado = !!comEditando;
+    reiniciarFormCom();
+    toast(editado ? 'Cambios guardados ✓' : 'Comentario agregado ✓');
+    await cargarComentariosAdmin();
+  } catch (err) { console.error(err); toast(err.message, 'error'); }
+  finally { boton.disabled = false; if (boton.textContent === 'Guardando…') boton.textContent = textoBoton; }
+}
+
+document.getElementById('formComentario').addEventListener('submit', guardarCom);
+document.getElementById('comLista').addEventListener('click', accionCom);
+document.getElementById('comCancelar').addEventListener('click', reiniciarFormCom);
+document.getElementById('comTexto').addEventListener('input', actualizarCuentaCom);
+actualizarInsigniaComentarios();                                          // al abrir el panel, el contador ya aparece
+
+document.getElementById('nuevoRefColoresContenedor').addEventListener('click', actualizarAvisoColorExistente);
+document.getElementById('nuevoRefColorCustom').addEventListener('input', actualizarAvisoColorExistente);
+
+// Inicializar
+renderColoresBotones('coloresContenedor');
+cargarPaletaColores();
+cargarCategorias();
+</script>
+
+</body>
+</html>
