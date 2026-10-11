@@ -584,7 +584,7 @@ h1 { text-align: center; margin: 4px 0 6px; }
 
 <script>
 const SUPABASE_URL = 'https://fhlpogqskudbtrashikb.supabase.co';
-const GITHUB_TOKEN = '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';
+const GITHUB_TOKEN = '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';
 const GITHUB_OWNER = 'AngelesAngeles';
 const GITHUB_REPO = 'Catalogo';
 
@@ -920,7 +920,7 @@ document.getElementById('formCrearProducto').addEventListener('submit', async (e
     if (!resGithub.ok) {
       const detalle = await resGithub.text();
       console.error('PUT GitHub:', resGithub.status, detalle);
-      throw new Error(`No se subió la imagen a GitHub (error ${resGithub.status}): ${detalle.slice(0, 160)}`);
+      throw new Error(mensajeErrorGithub(resGithub.status, detalle));
     }
 
     const imagenUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/media/${nombreArchivo}`;
@@ -1256,6 +1256,17 @@ function siguienteNumeroExtra(lista) {
   return (nums.length ? Math.max(...nums) : 0) + 1;     // si se borró la 2, la próxima es 4: nunca repite un nombre
 }
 const urlGithub = archivo => `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/media/${archivo}`;
+/* Mensaje entendible cuando GitHub rechaza una subida (en vez del texto técnico en inglés) */
+function mensajeErrorGithub(status, detalle) {
+  const explicacion = {
+    401: 'El token de GitHub no es válido o venció. Genera uno nuevo y cámbialo en GITHUB_TOKEN, al inicio del archivo del panel.',
+    403: 'El token de GitHub no tiene permiso para escribir en el repositorio (debe tener el permiso «repo»).',
+    404: 'GitHub no encontró el repositorio, o el token no tiene acceso a él. Revisa GITHUB_OWNER y GITHUB_REPO.',
+    409: 'GitHub detectó un choque al guardar. Espera unos segundos y vuelve a intentarlo.',
+    422: 'GitHub rechazó el archivo (puede que ya exista con ese nombre).'
+  }[status];
+  return `No se subió la imagen a GitHub (error ${status}). ${explicacion || String(detalle || '').slice(0, 160)}`;
+}
 const urlRaw    = archivo => `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/media/${archivo}`;
 
 /* Para REEMPLAZAR una imagen a propósito (cambiar la foto de un color, o un
@@ -1276,7 +1287,7 @@ async function subirImagenReemplazando(nombreArchivo, imagenDataUrl, mensaje) {
   if (!res.ok) {
     const detalle = await res.text();
     console.error('PUT GitHub:', res.status, detalle);
-    throw new Error(`No se subió la imagen a GitHub (error ${res.status}): ${detalle.slice(0, 160)}`);
+    throw new Error(mensajeErrorGithub(res.status, detalle));
   }
 }
 
@@ -1317,7 +1328,7 @@ async function agregarFotoExtra(prod, ref, imagen) {
         // 422 con "sha" = ya hay un archivo con ese nombre (p. ej. huérfano): se prueba el número siguiente
         if (res.status === 422 && /sha/i.test(detalle)) { n++; continue; }
         console.error('PUT GitHub:', res.status, detalle);
-        throw new Error(`No se subió la imagen a GitHub (error ${res.status}): ${detalle.slice(0, 160)}`);
+        throw new Error(mensajeErrorGithub(res.status, detalle));
       }
     }
     if (!foto) throw new Error('No se encontró un nombre libre para la imagen en GitHub');
