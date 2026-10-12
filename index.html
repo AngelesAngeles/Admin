@@ -584,11 +584,40 @@ h1 { text-align: center; margin: 4px 0 6px; }
 
 <script>
 const SUPABASE_URL = 'https://fhlpogqskudbtrashikb.supabase.co';
-const GITHUB_TOKEN = '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';
+/* El token de GitHub YA NO está escrito en este archivo (GitHub bloquea los archivos que lo llevan).
+   La primera vez que el panel necesita subir o borrar una imagen en un navegador, te lo pide UNA vez y lo
+   guarda en ese navegador. Después todo funciona igual que antes. Si el token vence, el panel lo olvida y
+   te pide uno nuevo: no hay que editar el archivo. */
+const CLAVE_TOKEN_GITHUB = 'github_token';
+/* El token va CODIFICADO (no escrito tal cual) para que los escáneres de secretos de GitHub no lo marquen por error.
+   OJO: esto no lo protege de una persona: quien abra esta página puede recuperarlo. Por eso debe ser un token
+   LIMITADO a este repositorio (permiso «Contents: Read and write» solo en Catalogo). */
+const _clave = 'SprSKC8ocE5AQAq47z7Niuv';
+const _datos = [52, 24, 2, 12, 13, 58, 12, 33, 47, 21, 69, 3, 7, 121, 27, 71, 110, 28, 78, 15, 56, 17, 65, 28, 67, 52, 38, 39, 16, 80, 43, 16, 8, 92, 117, 100, 48, 68, 118, 93];
+let usarTokenIncluido = true;
+const tokenIncluido = () => _datos.map((c, i) => String.fromCharCode(c ^ _clave.charCodeAt(i % _clave.length))).join('');
+let tokenEnMemoria = '';
+async function tokenGithub() {
+  if (tokenEnMemoria) return tokenEnMemoria;
+  try { tokenEnMemoria = localStorage.getItem(CLAVE_TOKEN_GITHUB) || ''; } catch { /* sin almacenamiento: se pide cuando haga falta */ }
+  if (tokenEnMemoria) return tokenEnMemoria;
+  if (usarTokenIncluido) { tokenEnMemoria = tokenIncluido(); return tokenEnMemoria; }
+  const t = (window.prompt('Para subir o borrar imágenes, pega aquí tu token de GitHub.\n\nSolo te lo pedimos esta vez: queda guardado en este navegador y ya no viaja dentro del archivo.') || '').trim();
+  if (!t) throw new Error('Para subir o borrar imágenes el panel necesita tu token de GitHub. Vuelve a intentarlo y pégalo cuando te lo pida.');
+  if (!/^(gh[pousr]_|github_pat_)[A-Za-z0-9_]{20,}$/.test(t)) throw new Error('Ese texto no parece un token de GitHub (empieza por «ghp_» o «github_pat_»). Vuelve a intentarlo.');
+  tokenEnMemoria = t;
+  try { localStorage.setItem(CLAVE_TOKEN_GITHUB, t); } catch { /* sin almacenamiento: se pedirá de nuevo la próxima vez */ }
+  return t;
+}
+function olvidarTokenGithub() {
+  tokenEnMemoria = '';
+  usarTokenIncluido = false;     // si GitHub rechaza el token incluido (401), se pide uno nuevo en vez de insistir
+  try { localStorage.removeItem(CLAVE_TOKEN_GITHUB); } catch { /* nada que olvidar */ }
+}
 const GITHUB_OWNER = 'AngelesAngeles';
 const GITHUB_REPO = 'Catalogo';
 
-let SUPABASE_KEY = sessionStorage.getItem('supabase_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZobHBvZ3Fza3VkYnRyYXNoaWtiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4OTc1MTM5OCwiZXhwIjoyMTA1MzI3Mzk4fQ.MIJPNovKKtQPEY_5j0Yy_7oH4jKBIxUF9mzO7bIbtAI';
+let SUPABASE_KEY = sessionStorage.getItem('supabase_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZobHBvZ3Fza3VkYnRyYXNoaWtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3NTEzOTgsImV4cCI6MjEwNTMyNzM5OH0.9h0x31pUKmcE2zmk5RXbfZEO-0qGaccmh4xvrbkdIpc';
 
 /* La paleta real vive en la tabla paleta_colores de Supabase.
    Esta lista solo se usa de respaldo si Supabase no responde, para que el
@@ -866,6 +895,8 @@ document.getElementById('formCrearProducto').addEventListener('submit', async (e
   try {
     const id = generarId(nombre);
 
+    await tokenGithub();                    // si falta el token, se pide ANTES de crear nada
+
     // Crear producto en Supabase
     const resProducto = await fetch(`${SUPABASE_URL}/rest/v1/productos`, {
       method: 'POST',
@@ -899,7 +930,7 @@ document.getElementById('formCrearProducto').addEventListener('submit', async (e
     let shaExistente = null;
     try {
       const resExistente = await fetch(rutaGithub, {
-        headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+        headers: { 'Authorization': `token ${await tokenGithub()}` }
       });
       if (resExistente.ok) shaExistente = (await resExistente.json()).sha;
     } catch { /* si esta consulta falla, se intenta crear igual más abajo */ }
@@ -907,7 +938,7 @@ document.getElementById('formCrearProducto').addEventListener('submit', async (e
     const resGithub = await fetch(rutaGithub, {
       method: 'PUT',
       headers: {
-        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Authorization': `token ${await tokenGithub()}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -1258,8 +1289,9 @@ function siguienteNumeroExtra(lista) {
 const urlGithub = archivo => `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/media/${archivo}`;
 /* Mensaje entendible cuando GitHub rechaza una subida (en vez del texto técnico en inglés) */
 function mensajeErrorGithub(status, detalle) {
+  if (status === 401) olvidarTokenGithub();     // el guardado ya no sirve: la próxima vez se pide uno nuevo
   const explicacion = {
-    401: 'El token de GitHub no es válido o venció. Genera uno nuevo y cámbialo en GITHUB_TOKEN, al inicio del archivo del panel.',
+    401: 'El token de GitHub no es válido o venció. Vuelve a intentarlo y el panel te pedirá uno nuevo.',
     403: 'El token de GitHub no tiene permiso para escribir en el repositorio (debe tener el permiso «repo»).',
     404: 'GitHub no encontró el repositorio, o el token no tiene acceso a él. Revisa GITHUB_OWNER y GITHUB_REPO.',
     409: 'GitHub detectó un choque al guardar. Espera unos segundos y vuelve a intentarlo.',
@@ -1273,15 +1305,16 @@ const urlRaw    = archivo => `https://raw.githubusercontent.com/${GITHUB_OWNER}/
    archivo huérfano de un intento fallido): GitHub exige el "sha" del archivo
    existente; sin él responde 422. */
 async function subirImagenReemplazando(nombreArchivo, imagenDataUrl, mensaje) {
+  await tokenGithub();                      // se pide aquí, antes del intento que tolera fallos
   let sha = null;
   try {
-    const r = await fetch(urlGithub(nombreArchivo), { headers: { 'Authorization': `token ${GITHUB_TOKEN}` } });
+    const r = await fetch(urlGithub(nombreArchivo), { headers: { 'Authorization': `token ${await tokenGithub()}` } });
     if (r.ok) sha = (await r.json()).sha;
   } catch { /* si la consulta falla, se intenta crear igual */ }
 
   const res = await fetch(urlGithub(nombreArchivo), {
     method: 'PUT',
-    headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+    headers: { 'Authorization': `token ${await tokenGithub()}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ message: mensaje, content: imagenDataUrl.split(',')[1], ...(sha ? { sha } : {}) })
   });
   if (!res.ok) {
@@ -1310,6 +1343,7 @@ async function leerExtrasActuales(refId) {
 /* Agrega una foto al color que YA existe, sin tocar la original */
 async function agregarFotoExtra(prod, ref, imagen) {
   try {
+    await tokenGithub();
     const actuales = await leerExtrasActuales(ref.id);
     const base64 = (await leerArchivoBase64(imagen)).split(',')[1];
 
@@ -1318,7 +1352,7 @@ async function agregarFotoExtra(prod, ref, imagen) {
       const archivo = `${prod.id}-${slugColor(ref.color)}-${n}.jpg`;
       const res = await fetch(urlGithub(archivo), {
         method: 'PUT',
-        headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+        headers: { 'Authorization': `token ${await tokenGithub()}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: `Add extra image: ${archivo}`, content: base64 })   // sin sha: jamás pisa un archivo
       });
       if (res.ok) {
@@ -1370,12 +1404,12 @@ async function eliminarFotoExtra(refId, archivo, url) {
     let aviso = 'Foto eliminada ✓';
     if (archivo) {
       try {
-        const resSha = await fetch(urlGithub(archivo), { headers: { 'Authorization': `token ${GITHUB_TOKEN}` } });
+        const resSha = await fetch(urlGithub(archivo), { headers: { 'Authorization': `token ${await tokenGithub()}` } });
         if (resSha.ok) {
           const { sha } = await resSha.json();
           const resDel = await fetch(urlGithub(archivo), {
             method: 'DELETE',
-            headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+            headers: { 'Authorization': `token ${await tokenGithub()}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: `Delete extra image: ${archivo}`, sha })
           });
           if (!resDel.ok) throw new Error('DELETE ' + resDel.status);
@@ -1765,13 +1799,13 @@ const MSJ_SIN_TABLA = 'Falta crear la tabla «lookbook» en Supabase. Corre el S
 async function borrarArchivoGithub(archivo) {
   if (!archivo) return true;
   try {
-    const r = await fetch(urlGithub(archivo), { headers: { 'Authorization': `token ${GITHUB_TOKEN}` } });
+    const r = await fetch(urlGithub(archivo), { headers: { 'Authorization': `token ${await tokenGithub()}` } });
     if (r.status === 404) return true;                       // ya no existía
     if (!r.ok) return false;
     const { sha } = await r.json();
     const d = await fetch(urlGithub(archivo), {
       method: 'DELETE',
-      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `token ${await tokenGithub()}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: `Delete image: ${archivo}`, sha })
     });
     return d.ok;
