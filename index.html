@@ -203,6 +203,15 @@ h1 { text-align: center; margin: 4px 0 6px; }
 .com-nuevos .com-item { border-color: #E0A100; }
 .nuevo-tag { display: inline-block; padding: 1px 8px; border-radius: 999px; background: #C91F16; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .com-sub { margin: 4px 0 12px; font-size: 17px; }
+.ig-reel-item { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 10px; background: #fff; }
+.ig-reel-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0; background: #f0f0f0; }
+.ig-reel-item__info { overflow: hidden; }
+.ig-reel-item__url { font-size: 13px; color: #444; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 480px; display: block; }
+.ig-reel-item__estado { font-size: 12px; font-weight: 600; }
+.ig-reel-item__estado.ok { color: #1E7E34; }
+.ig-reel-item__estado.off { color: #B3541E; }
+.ig-reel-item__acciones { display: flex; gap: 6px; flex-shrink: 0; }
+.ig-reel-item__acciones button { padding: 5px 10px; font-size: 12px; }
 .com-item { display: grid; gap: 12px; padding: 14px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fff; }
 .com-item__txt { margin: 0; font-size: 15px; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
 .com-item__meta { display: block; margin-top: 6px; font-size: 13px; color: #666; }
@@ -251,6 +260,7 @@ h1 { text-align: center; margin: 4px 0 6px; }
     <button class="tab-btn" onclick="cambiarTab('colores')">🎨 Colores</button>
     <button class="tab-btn" onclick="cambiarTab('categorias')">📁 Categorías</button>
     <button class="tab-btn" onclick="cambiarTab('temporada')">🌸 Temporada</button>
+    <button class="tab-btn" onclick="cambiarTab('instagram')">📷 Instagram</button>
     <button class="tab-btn" onclick="cambiarTab('comentarios')">💬 Comentarios<span id="insigniaCom" class="insignia-com" hidden></span></button>
   </div>
 
@@ -444,6 +454,27 @@ h1 { text-align: center; margin: 4px 0 6px; }
     <div class="section">
       <h2>Trajes cargados</h2>
       <div id="looksLista"></div>
+    </div>
+  </div>
+
+  <!-- TAB 6: INSTAGRAM -->
+  <div id="tab-instagram" class="tab-content">
+    <div class="section">
+      <h2>Videos de Instagram</h2>
+      <p class="ayuda">Pega aquí los enlaces de los reels que quieres mostrar en el catálogo. Puedes pegar el enlace completo tal como lo copias desde Instagram (con o sin parámetros extra), el panel extrae el código del video automáticamente.</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:8px;">
+        <div style="flex:1; min-width:260px;">
+          <label for="igUrlInput" style="font-size:.9rem; color:#555; display:block; margin-bottom:4px;">Enlace del reel</label>
+          <input type="url" id="igUrlInput" placeholder="https://www.instagram.com/reel/ABC123xyz/" autocomplete="off" style="width:100%">
+        </div>
+        <button type="button" id="igAgregarBtn">Agregar video</button>
+      </div>
+      <p class="status" id="igMsg" style="margin:0 0 8px; min-height:1.4em;"></p>
+    </div>
+    <div class="section">
+      <h2>Videos cargados <span id="igContador" style="font-size:14px; color:#888; font-weight:400;"></span></h2>
+      <p class="ayuda" id="igAyuda">Puedes cambiar el orden con ↑ ↓. Los que estén ocultos no aparecerán en el catálogo.</p>
+      <div id="igLista"></div>
     </div>
   </div>
 
@@ -665,6 +696,7 @@ function cambiarTab(tab) {
   if (tab === 'gestionar') cargarProductos();
   if (tab === 'colores') mostrarColoresPredefinidos();
   if (tab === 'temporada') cargarLooksAdmin();
+  if (tab === 'instagram') cargarInstagramAdmin();
   if (tab === 'comentarios') cargarComentariosAdmin();
 }
 
@@ -2384,6 +2416,94 @@ document.addEventListener('click', e => {
   else if (!b.disabled) { b.closest('.pieza-form').remove(); actualizarPiezas(); }
 });
 aplicarTipoProducto('individual');
+
+/* ── Instagram: gestión de reels desde el panel ──────────────────────────────
+   Tabla instagram_reels: url (enlace completo del reel), orden, activo.
+   El catálogo extrae el código del reel a partir de la url guardada. */
+let reelsAdmin = [];
+const igCodigo = url => { const m = String(url).match(/reel\/([A-Za-z0-9_-]{5,20})/); return m ? m[1] : null; };
+const igThumb = code => `https://www.instagram.com/p/${code}/media/?size=m`;
+function igMensaje(txt, tipo='') { const el = document.getElementById('igMsg'); el.textContent = txt; el.className = 'status ' + tipo; }
+
+async function cargarInstagramAdmin() {
+  const lista = document.getElementById('igLista'), cont = document.getElementById('igContador');
+  lista.innerHTML = '<p class="ayuda">Cargando…</p>';
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/instagram_reels?order=orden,id`, { headers: cabecerasSupabase() });
+    if (res.status === 404) { lista.innerHTML = '<p class="status error">Falta crear la tabla «instagram_reels». Corre el SQL de Instagram en Supabase y recarga.</p>'; return; }
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    reelsAdmin = await res.json();
+    renderInstagramAdmin();
+  } catch (err) { lista.innerHTML = `<p class="status error">${esc(err.message)}</p>`; }
+}
+
+function renderInstagramAdmin() {
+  const lista = document.getElementById('igLista'), cont = document.getElementById('igContador');
+  cont.textContent = reelsAdmin.length ? `(${reelsAdmin.length} video${reelsAdmin.length > 1 ? 's' : ''})` : '';
+  if (!reelsAdmin.length) { lista.innerHTML = '<p class="ayuda">Todavía no hay videos. Agrega el primer enlace arriba.</p>'; return; }
+  lista.innerHTML = reelsAdmin.map((r, i) => {
+    const code = igCodigo(r.url);
+    return `<div class="ig-reel-item">
+      <img src="${code ? esc(igThumb(code)) : ''}" alt="miniatura" loading="lazy" onerror="this.style.display='none'">
+      <div class="ig-reel-item__info">
+        <span class="ig-reel-item__url" title="${esc(r.url)}">${esc(r.url)}</span>
+        <span class="ig-reel-item__estado ${r.activo ? 'ok' : 'off'}">${r.activo ? 'Visible en el catálogo' : 'Oculto'}</span>
+      </div>
+      <div class="ig-reel-item__acciones">
+        <button type="button" class="secondary btn-ig-subir" data-id="${r.id}" ${i === 0 ? 'disabled' : ''}>↑</button>
+        <button type="button" class="secondary btn-ig-bajar" data-id="${r.id}" ${i === reelsAdmin.length - 1 ? 'disabled' : ''}>↓</button>
+        <button type="button" class="secondary btn-ig-activo" data-id="${r.id}">${r.activo ? 'Ocultar' : 'Mostrar'}</button>
+        <button type="button" class="danger btn-ig-eliminar" data-id="${r.id}">Eliminar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function accionInstagram(e) {
+  const btn = e.target.closest('button[data-id]'); if (!btn || btn.disabled) return;
+  const id = btn.dataset.id, r = reelsAdmin.find(x => String(x.id) === id), i = reelsAdmin.indexOf(r);
+  if (!r) return;
+  try {
+    if (btn.classList.contains('btn-ig-activo')) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/instagram_reels?id=eq.${id}`, { method: 'PATCH', headers: cabecerasSupabase(), body: JSON.stringify({ activo: !r.activo }) });
+      if (!res.ok) throw new Error(`Error ${res.status}`); toast(r.activo ? 'Video oculto ✓' : 'Video visible ✓'); return cargarInstagramAdmin();
+    }
+    if (btn.classList.contains('btn-ig-eliminar')) {
+      if (!confirm(`¿Eliminar este video?\n\n${r.url.slice(0, 80)}`)) return;
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/instagram_reels?id=eq.${id}`, { method: 'DELETE', headers: cabecerasSupabase() });
+      if (!res.ok) throw new Error(`Error ${res.status}`); toast('Video eliminado ✓'); return cargarInstagramAdmin();
+    }
+    if (btn.classList.contains('btn-ig-subir') || btn.classList.contains('btn-ig-bajar')) {
+      const j = btn.classList.contains('btn-ig-subir') ? i - 1 : i + 1;
+      if (j < 0 || j >= reelsAdmin.length) return;
+      const copia = [...reelsAdmin]; [copia[i], copia[j]] = [copia[j], copia[i]];
+      const cambios = copia.map((x, k) => ({ x, k })).filter(({ x, k }) => x.orden !== k);
+      const rs = await Promise.all(cambios.map(({ x, k }) => fetch(`${SUPABASE_URL}/rest/v1/instagram_reels?id=eq.${x.id}`, { method: 'PATCH', headers: cabecerasSupabase(), body: JSON.stringify({ orden: k }) })));
+      if (rs.some(res => !res.ok)) throw new Error('No se pudo guardar el nuevo orden'); return cargarInstagramAdmin();
+    }
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+async function agregarReel() {
+  const inp = document.getElementById('igUrlInput'); const url = inp.value.trim();
+  if (!url) return igMensaje('Pega el enlace del reel primero.', 'error');
+  const code = igCodigo(url);
+  if (!code) return igMensaje('No encontré el código del reel en ese enlace. Asegúrate de que sea un reel de Instagram.', 'error');
+  if (reelsAdmin.some(r => igCodigo(r.url) === code)) return igMensaje('Ese video ya está en la lista.', 'error');
+  const btn = document.getElementById('igAgregarBtn'); btn.disabled = true; btn.textContent = 'Agregando…'; igMensaje('');
+  try {
+    const orden = reelsAdmin.reduce((m, r) => Math.max(m, r.orden || 0), 0) + 1;
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/instagram_reels`, { method: 'POST', headers: { ...cabecerasSupabase(), 'Prefer': 'return=minimal' }, body: JSON.stringify({ url, orden, activo: true }) });
+    if (!res.ok) throw new Error(`Error ${res.status}: ${await res.text()}`);
+    inp.value = ''; igMensaje('Video agregado ✓', 'ok'); toast('Reel agregado ✓'); await cargarInstagramAdmin();
+  } catch (err) { igMensaje(err.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Agregar video'; }
+}
+
+document.getElementById('igAgregarBtn').addEventListener('click', agregarReel);
+document.getElementById('igUrlInput').addEventListener('keydown', e => { if (e.key === 'Enter') agregarReel(); });
+document.getElementById('igLista').addEventListener('click', accionInstagram);
+actualizarInsigniaComentarios();
 
 /* ── Comentarios del catálogo ─────────────────────────────────────────────
    Tabla comentarios: texto, autor (opcional), orden, activo, origen y nuevo.
